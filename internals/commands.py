@@ -13,7 +13,7 @@ def fill(strip, color):
     """Instataneously set the entire array to some color."""
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, color)
-        strip.show()
+    strip.show()
 
 # Define functions which animate LEDs in various ways.
 def colorWipe(strip: PixelStrip, color, wait_ms=50):

@@ -1,19 +1,41 @@
 COLORS = {
-    "red": 0xFF0000,
-    "orange": 0xFF3F00,
-    "yellow": 0xFFFF00,
-    "green": 0x008000,
+    "black": 0x000000,
     "blue": 0x0000FF,
+    "green": 0x008000,
     "magenta": 0xFF00FF,
-    "purple": 0x9400D3,
+    "orange": 0xFF3F00,
     # Actually purple, but imabalnces cause some interesting behaviour. 
     "pink": 0xFF60FF,
+    "purple": 0x9400D3,
+    "red": 0xFF0000,
     "white": 0xFFFFFF,
-    "black": 0x000000,
+    "yellow": 0xFF5F00,
+
+    
+}
+
+COLOR_SHORTHAND = {
+    "b": "blue",
+    "c": "cyan",
+    "g": "green",
+    # Avoids a collision with blue.
+    "k": "black",
+    # Avoids a collosion with pink. 
+    "m": "purple",
+    "o": "orange",
+    "p": "pink",
+    "r": "red",
+    "w": "white",
+    "y": "yellow",
 }
 
 def try_get_color(name: str):
     color = 0x000000
+    if len(name) == 1: 
+        try:
+            name = COLOR_SHORTHAND[name]
+        except KeyError:
+            return False, (0,0,0)
     # Check to make sure the color specified actually exists. 
     try: 
         color = COLORS[name]

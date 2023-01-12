@@ -9,7 +9,7 @@ from internals.utils import try_num
 
 # LED strip configuration:
 LED_COUNT = 100        # Number of LED pixels.
-LED_PIN = 21          # GPIO pin connected to the pixels (18 uses PWM!).
+LED_PIN = 18          # GPIO pin connected to the pixels (18 uses PWM!).
 # LED_PIN = 10        # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA = 10          # DMA channel to use for generating signal (try 10)
@@ -38,9 +38,19 @@ Program = SimpleNamespace(**{
     "animation": 2,
     # Maximum of the animation timer.
     "max_animation": 3,
+
+    # If the program's main loop is being interrupted (eg: by a flash.)
+    "interrupt": False,
+    "interrupt_state": 0,
+    # Timer to indicate when normal execution resumes.
+    "interrupt_timer": 0,
+
+    # SPECIAL STUFF:
+    "flash_color": (255,0,63),
 })
 
-def update_state(): ...
+def update_state(): 
+    fill(Program.strip, Color(0,0,0))
 
 def on_frame():
     if Program.state == 0:
@@ -51,6 +61,15 @@ def on_frame():
         if Program.animation == 0: Program.animation = Program.max_animation
         Program.animation -= 1
         theaterChaseFrame(Program.strip, Color(*Program.color), Program)
+
+async def on_interrupt(event):
+    if Program.interrupt_state == 1:
+        fill(Program.strip, Color(*Program.flash_color))
+    # If interrupt is 0, then we simply pause. Free command!
+    try: 
+        await asyncio.wait_for(event.wait(), Program.interrupt_timer)
+        event.clear()
+    except (cf.TimeoutError, asyncio.TimeoutError): pass
 
 async def get_input(event: asyncio.Event): 
     while Program.running:
@@ -67,6 +86,8 @@ async def get_input(event: asyncio.Event):
             parameters = await kill_command(parameters, Program)
         elif command == "fill" or command == "on":
             parameters = await fill_command(parameters, Program)
+        elif command == "flash":
+            parameters = await flash_command(parameters, Program)
         elif command == "alt": 
             parameters = await alt_command(parameters, Program)
         elif command == "color":
@@ -84,17 +105,19 @@ async def get_input(event: asyncio.Event):
         event.set()
 
 async def led_loop(event):
-    while Program.running:
+    while Program.running: 
         try: 
             await asyncio.wait_for(event.wait(), Program.interval)
             event.clear()
             # TODO: Add stuff that happens on these events. Maybe flashes of light?
             update_state()
-        except (cf.TimeoutError, asyncio.TimeoutError):
-            pass
-        finally: 
-            # Eventually, other logic will be inserted here. 
-            on_frame()
+        except (cf.TimeoutError, asyncio.TimeoutError): pass
+
+        # Eventually, other logic will be inserted here. 
+        if Program.interrupt:   
+            await on_interrupt(event)
+            Program.interrupt = False
+        on_frame()
     
     Program.running = False
     fill(Program.strip, Color(0,0,0))

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from aio_stdout import ainput, aprint
 import asyncio
-from utils import try_num
-from color import try_get_color
+from .utils import try_num
+from .color import try_get_color
 
 async def kill_command(parameters: list[str], Program):
     Program.state = 0
@@ -18,6 +18,21 @@ async def fill_command(parameters: list[str], Program):
 
     await aprint(">   Lights on!")
     return parameters
+
+async def flash_command(parameters: list[str], Program):
+    Program.interrupt = True
+    await aprint(">   Flashing!")
+    Program.interrupt_state = 1
+    if len(parameters) == 0: 
+        Program.interrupt_timer = 1
+        await aprint("    For: 1000ms")
+        return parameters
+    
+    flash_time = try_num(parameters[0])
+    if flash_time <= 0: flash_time = 1000
+    Program.interrupt_timer = flash_time * 0.001
+    await aprint("    For: %sms" % int(flash_time))
+    return parameters[1:]
 
 async def alt_command(parameters: list[str], Program):
     Program.state = 2
