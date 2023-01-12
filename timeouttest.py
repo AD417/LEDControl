@@ -1,6 +1,6 @@
 from aio_stdout import ainput, aprint
+import concurrent.futures
 import asyncio
-from asyncio.exceptions import TimeoutError
 
 class Timer:
     running = True
@@ -30,7 +30,8 @@ async def countdown(event):
             event.clear()
             # Eventually, other logic will be inserted here. 
             perform_operations()
-        except TimeoutError: pass
+        except concurrent.futures.TimeoutError: pass
+        except asyncio.TimeoutError: pass
         finally: 
             # This is for demonstration; It's pretty hideous.
             print(Timer.frames_left)

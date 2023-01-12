@@ -1,13 +1,10 @@
-#!/usr/bin/env python3
-# NeoPixel library strandtest example
-# Author: Tony DiCola (tony@tonydicola.com)
-#
-# Direct port of the Arduino NeoPixel library strandtest example.  Showcases
-# various animations on a strip of NeoPixels.
-
-import time
+from aio_stdout import ainput, aprint
 from rpi_ws281x import PixelStrip, Color
-import argparse
+import asyncio
+import concurrent.futures as cf
+from types import SimpleNamespace
+from internals.commands import *
+from internals.utils import try_num
 
 # LED strip configuration:
 LED_COUNT = 100        # Number of LED pixels.
@@ -19,104 +16,110 @@ LED_BRIGHTNESS = 255  # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False    # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 
+Program = SimpleNamespace(**{
+    # The LED array.
+    "strip": PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL),
+    # Whether the program is running.
+    "running": True,
+    # The intended interval.
+    "real_interval": 1,
+    # The interval we give asyncio Timeout to make up for commands taking a while to run.
+    "interval": 1,
+    # When the program began.
+    "start": time.time(),
+    # Current State:
+    # 0: off
+    # 1: fill
+    # 2: alternating
+    "state": 0,
+    "color": (255,255,255),
+    # Animation timer, used to determine where the program is in some process.
+    "animation": 2,
+    # Maximum of the animation timer.
+    "max_animation": 3,
+})
 
-# Define functions which animate LEDs in various ways.
-def colorWipe(strip, color, wait_ms=50):
-    """Wipe color across display a pixel at a time."""
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(i, color)
-        strip.show()
-        time.sleep(wait_ms / 1000.0)
+def update_state(): ...
 
+def on_frame():
+    if Program.state == 0:
+        fill(Program.strip, Color(0,0,0))
+    elif Program.state == 1: 
+        fill(Program.strip, Color(*Program.color))
+    elif Program.state == 2:
+        if Program.animation == 0: Program.animation = Program.max_animation
+        Program.animation -= 1
+        theaterChaseFrame(Program.strip, Color(*Program.color), Program)
 
-def theaterChase(strip, color, wait_ms=50, iterations=10):
-    """Movie theater light style chaser animation."""
-    for j in range(iterations):
-        for q in range(3):
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i + q, color)
-            strip.show()
-            time.sleep(wait_ms / 1000.0)
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i + q, 0)
+async def get_input(event: asyncio.Event): 
+    while Program.running:
+        futureState = -1
+        try:
+            full_command = (await ainput("$ ")).strip()
+        except KeyboardInterrupt: 
+            # This except never seems to trigger. Ah well. 
+            full_command = "exit"
 
+        parameters = full_command.split(" ")
+        command = parameters.pop(0)
 
-def wheel(pos):
-    """Generate rainbow colors across 0-255 positions."""
-    if pos < 85:
-        return Color(pos * 3, 255 - pos * 3, 0)
-    elif pos < 170:
-        pos -= 85
-        return Color(255 - pos * 3, 0, pos * 3)
-    else:
-        pos -= 170
-        return Color(0, pos * 3, 255 - pos * 3)
+        if command == "kill" or command == "off":
+            futureState = 0
+        elif command == "fill" or command == "on":
+            futureState = 1
+        elif command == "alt": 
+            futureState = 2
+            interval = 500
+            width = 3
+            if len(parameters) > 0:
+                interval = try_num(parameters[0])
+                if interval >= 50: 
+                    Program.interval = interval * 0.001
+                else: 
+                    Program.interval = 0.5
+            if len(parameters) > 1: 
+                width = try_num(parameters[1])
+                if width > 1: 
+                    Program.max_animation = int(width)
+                else: 
+                    Program.max_animation = 3
+            await aprint(
+                f">   Alternating!\n    Interval: {interval}ms\n    Alt size: 1 in {width}"
+            )
+        elif command == "exit":
+            Program.running = False
+        else:
+            await aprint("Invalid command: %s" % full_command)
+            continue
+            
+        if futureState == Program.state: continue
+        if futureState != -1:
+            Program.state = futureState
+            Program.same_cmd = False
+        event.set()
 
+async def led_loop(event):
+    while Program.running:
+        try: 
+            await asyncio.wait_for(event.wait(), Program.interval)
+            event.clear()
+            # TODO: Add stuff that happens on these events. Maybe flashes of light?
+            update_state()
+        except (cf.TimeoutError, asyncio.TimeoutError):
+            pass
+        finally: 
+            # Eventually, other logic will be inserted here. 
+            on_frame()
+    
+    Program.running = False
+    fill(Program.strip, Color(0,0,0))
 
-def rainbow(strip, wait_ms=20, iterations=1):
-    """Draw rainbow that fades across all pixels at once."""
-    for j in range(256 * iterations):
-        for i in range(strip.numPixels()):
-            strip.setPixelColor(i, wheel((i + j) & 255))
-        strip.show()
-        time.sleep(wait_ms / 1000.0)
+async def main():
+    Program.strip.begin()
+    # This event syncs both sides of this operation. 
+    # I probably should create a new "led_loop" task from the get_input function. 
+    event = asyncio.Event()
+    await asyncio.gather(led_loop(event), get_input(event))
 
-
-def rainbowCycle(strip, wait_ms=20, iterations=5):
-    """Draw rainbow that uniformly distributes itself across all pixels."""
-    for j in range(256 * iterations):
-        for i in range(strip.numPixels()):
-            strip.setPixelColor(i, wheel(
-                (int(i * 256 / strip.numPixels()) + j) & 255))
-        strip.show()
-        time.sleep(wait_ms / 1000.0)
-
-
-def theaterChaseRainbow(strip, wait_ms=50):
-    """Rainbow movie theater light style chaser animation."""
-    for j in range(256):
-        for q in range(3):
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i + q, wheel((i + j) % 255))
-            strip.show()
-            time.sleep(wait_ms / 1000.0)
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i + q, 0)
-
-
-# Main program logic follows:
-if __name__ == '__main__':
-    # Process arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
-    args = parser.parse_args()
-
-    # Create NeoPixel object with appropriate configuration.
-    strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
-    # Intialize the library (must be called once before other functions).
-    strip.begin()
-
-    print('Press Ctrl-C to quit.')
-    if not args.clear:
-        print('Use "-c" argument to clear LEDs on exit')
-
-    try:
-
-        while True:
-            print('Testing!.')
-            theaterChase(strip, Color(127, 127, 127), wait_ms=500)  # White theater chase
-            # colorWipe(strip, Color(255, 0, 0))  # Red wipe
-            # colorWipe(strip, Color(0, 255, 0))  # Green wipe
-            # colorWipe(strip, Color(0, 0, 255))  # Blue wipe
-            # print('Theater chase animations.')
-            # theaterChase(strip, Color(127, 127, 127))  # White theater chase
-            # theaterChase(strip, Color(127, 0, 0))  # Red theater chase
-            # theaterChase(strip, Color(0, 0, 127))  # Blue theater chase
-            # print('Rainbow animations.')
-            # rainbow(strip)
-            # rainbowCycle(strip)
-            # theaterChaseRainbow(strip)
-
-    except KeyboardInterrupt:
-        if args.clear:
-            colorWipe(strip, Color(0, 0, 0), 10)
+if __name__ == "__main__":
+    asyncio.run(main()) 
