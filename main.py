@@ -4,6 +4,7 @@ import asyncio
 import concurrent.futures as cf
 from types import SimpleNamespace
 from internals.commands import *
+from internals.command_handler import *
 from internals.utils import try_num
 
 # LED strip configuration:
@@ -53,7 +54,6 @@ def on_frame():
 
 async def get_input(event: asyncio.Event): 
     while Program.running:
-        futureState = -1
         try:
             full_command = (await ainput("$ ")).strip()
         except KeyboardInterrupt: 
@@ -64,38 +64,23 @@ async def get_input(event: asyncio.Event):
         command = parameters.pop(0)
 
         if command == "kill" or command == "off":
-            futureState = 0
+            parameters = await kill_command(parameters, Program)
         elif command == "fill" or command == "on":
-            futureState = 1
+            parameters = await fill_command(parameters, Program)
         elif command == "alt": 
-            futureState = 2
-            interval = 500
-            width = 3
-            if len(parameters) > 0:
-                interval = try_num(parameters[0])
-                if interval >= 50: 
-                    Program.interval = interval * 0.001
-                else: 
-                    Program.interval = 0.5
-            if len(parameters) > 1: 
-                width = try_num(parameters[1])
-                if width > 1: 
-                    Program.max_animation = int(width)
-                else: 
-                    Program.max_animation = 3
-            await aprint(
-                f">   Alternating!\n    Interval: {interval}ms\n    Alt size: 1 in {width}"
-            )
+            parameters = await alt_command(parameters, Program)
+        elif command == "color":
+            parameters = await color_command(parameters, Program)
         elif command == "exit":
             Program.running = False
         else:
             await aprint("Invalid command: %s" % full_command)
             continue
-            
-        if futureState == Program.state: continue
-        if futureState != -1:
-            Program.state = futureState
-            Program.same_cmd = False
+
+        # if futureState == Program.state: continue
+        # if futureState != -1:
+        #     Program.state = futureState
+        #     Program.same_cmd = False
         event.set()
 
 async def led_loop(event):
