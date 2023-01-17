@@ -81,7 +81,7 @@ async def on_interrupt(event):
 async def get_input(command_executed_event: asyncio.Event): 
     while Program.running:
         try:
-            full_command = (await ainput("$ ")).strip()
+            full_command = (await ainput("$ ")).strip().lower()
         except KeyboardInterrupt: 
             # This except never seems to trigger. Ah well. 
             full_command = "exit"
@@ -93,7 +93,7 @@ async def get_input(command_executed_event: asyncio.Event):
             else:
                 Program.recursion = False
         
-    do_my_command(full_command, Program, command_executed_event)
+        await do_my_command(full_command, Program, command_executed_event)
 
 async def led_loop(command_executed_event):
     while Program.running: 

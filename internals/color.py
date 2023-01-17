@@ -16,7 +16,8 @@ COLORS = {
 
 COLOR_SHORTHAND = {
     "b": "blue",
-    "c": "cyan",
+    # Potential collision with "cyan".
+    "c": "custom", 
     "g": "green",
     # Avoids a collision with blue.
     "k": "black",
@@ -53,6 +54,11 @@ def try_get_color(name: str):
 
     return True, (r,g,b)
 
+def unshorten_color(char: str):
+    try:
+        return COLOR_SHORTHAND[char]
+    except KeyError:
+        return ""
 
 if __name__ == "__main__":
     success, color = try_get_color("pink")

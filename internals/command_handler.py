@@ -3,17 +3,17 @@ from __future__ import annotations
 from aio_stdout import ainput, aprint
 import asyncio
 from .utils import try_num
-from .color import try_get_color
+from .color import try_get_color, unshorten_color
 
 async def do_my_command(full_command: str, Program, command_executed_event: asyncio.Event):
     """Execute a command providded by the user.\n
-    Valid commands / basic info: 
-    `kill` / `off`: Kill the lights
-    `fill` / `on`: Turn on all lights
-    `flash`: INTERRUPT: Flash the lights for an interval.
-    `alt`: Make the lights alternate, akin to a theater chase.
-    `color`: Set the color of the lights.
-    `pause`: INTERRUPT: pause the lights for an interval.
+    Valid commands / basic info: \n
+    `kill` / `off`: Kill the lights\n
+    `fill` / `on`: Turn on all lights\n
+    `flash`: INTERRUPT: Flash the lights for an interval.\n
+    `alt`: Make the lights alternate, akin to a theater chase.\n
+    `color`: Set the color of the lights.\n
+    `pause`: INTERRUPT: pause the lights for an interval.\n
     `exit`: Immediately shut down and exit the application."""
     parameters = full_command.split(" ")
     command = parameters.pop(0)
@@ -113,20 +113,25 @@ async def color_command(parameters: list[str], Program):
     if len(parameters) == 0: 
         await aprint(">   ERROR: Color command must supply a parameter!")
         return parameters
-    if parameters[0] == "custom" or parameters[0] == "c": 
+
+    color_name = parameters[0]
+    if len(color_name) == 1: color_name = unshorten_color(color_name)
+    if color_name == "custom": 
         return await custom_color_command(parameters, Program)
+
     success, color = try_get_color(parameters[0])
     if not success: 
         await aprint("""ERROR: "%s" is not a valid color!""" % parameters[0])
         return parameters
     
-    if Program.interrupt: 
+    if Program.interrupt or (len(parameters) > 1 and parameters[1] == "-f"): 
         Program.flash_color = color
-        await aprint(">   Flash color has been changed to: " + parameters[0])
+        await aprint(">   Flash color has been changed to: " + color_name)
+        return parameters[2:]
     else: 
         Program.color = color
-        await aprint(">   Primary color has been changed to: " + parameters[0])
-    return parameters[1:]
+        await aprint(">   Primary color has been changed to: " + color_name)
+        return parameters[1:]
 
 async def custom_color_command(parameters: list[str], Program):
     """
