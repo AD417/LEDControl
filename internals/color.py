@@ -9,7 +9,7 @@ COLORS = {
     "purple": 0x9400D3,
     "red": 0xFF0000,
     "white": 0xFFFFFF,
-    "yellow": 0xFF5F00,
+    "yellow": 0xFF8F00,
 
     
 }

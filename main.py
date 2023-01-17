@@ -56,6 +56,7 @@ Program = SimpleNamespace(**{
 })
 
 def update_state(): 
+    # TODO: this command can visibily disrupt the LED array. FIX IT.
     fill(Program.strip, Color(0,0,0))
 
 def on_frame():
@@ -77,6 +78,11 @@ async def on_interrupt(event):
         event.clear()
     except (cf.TimeoutError, asyncio.TimeoutError): pass
     fill(Program.strip, Color(0,0,0))
+    if Program.next_command != "":
+        # Not sure why this line is needed. But it does. But it's probably better. 
+        cmd = Program.next_command
+        Program.next_command = ""
+        await do_my_command(cmd, Program, event)
 
 async def get_input(command_executed_event: asyncio.Event): 
     while Program.running:

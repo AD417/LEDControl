@@ -40,6 +40,7 @@ async def do_my_command(full_command: str, Program, command_executed_event: asyn
             await aprint("Invalid command: %s" % full_command)
         return
 
+    Program.next_command = ""
     while len(parameters) > 0:
         # Color command.
         if parameters[0] == "-c":
@@ -55,11 +56,15 @@ async def do_my_command(full_command: str, Program, command_executed_event: asyn
             # Most parameters are, by design, only ever the last parameter.
             break
         elif parameters[0] == "-k": 
-            break
+            if not Program.interrupt:
+                await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
+                break
+            parameters = await kill_parameter(parameters[1:], Program)
         elif parameters[0] == "-n":
             if not Program.interrupt:
                 await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
                 break
+            await next_command(parameters[1:], Program)
             break
         elif parameters[0] == "-p":
             parameters = await pause_command(parameters[1:], Program)
@@ -116,6 +121,7 @@ async def color_command(parameters: list[str], Program):
 
     color_name = parameters[0]
     if len(color_name) == 1: color_name = unshorten_color(color_name)
+
     if color_name == "custom": 
         return await custom_color_command(parameters, Program)
 
@@ -123,11 +129,16 @@ async def color_command(parameters: list[str], Program):
     if not success: 
         await aprint("""ERROR: "%s" is not a valid color!""" % parameters[0])
         return parameters
-    
-    if Program.interrupt or (len(parameters) > 1 and parameters[1] == "-f"): 
+
+    has_flash_parameter = len(parameters) > 1 and parameters[1] == "-f"
+
+    if Program.interrupt or has_flash_parameter: 
         Program.flash_color = color
         await aprint(">   Flash color has been changed to: " + color_name)
+        if Program.interrupt and not has_flash_parameter: 
+            return parameters[1:]
         return parameters[2:]
+
     else: 
         Program.color = color
         await aprint(">   Primary color has been changed to: " + color_name)
@@ -202,15 +213,30 @@ async def kill_command(parameters: list[str], Program):
     await aprint(">   Killing the lights!")
     return parameters
 
+async def kill_parameter(parameters: list[str], Program):
+    """Set the next command to kill the lights. Useful for dramatic flashes ("gunshots") where the lights need to be killed suddenly.\n
+    Legal Parameters:
+    None"""
+    await next_command(["kill"], Program)
+    return parameters
+
+
 async def next_command(parameters: list[str], Program):
-    """Set the command that executes immediately after the pending interrupt. (Interrupts are signified by `INTERRUPT` in the documentation."""
-    ... # TODO
+    """Set the command that executes immediately after the pending interrupt. (Interrupts are signified by `INTERRUPT` in the documentation.\n
+    Legal Parameters:
+    `command`: The command to be executed. This consists of the rest of the parameters in the command.\n
+    Note: This command will not have any follow-up parameters."""
+    Program.next_command = " ".join(parameters)
+    await aprint("    Next command set to: " + Program.next_command)
+    return []
+
 
 async def pause_command(parameters: list[str], Program):
     """INTERRUPT: Halt all execution. This halt may be either indefinite or for a set interval, based on supplied parameters.
     Legal Parameters:
     `pause_time_ms`: The amount of time to pause, in milliseconds. Default Infinity. Must be at least 50ms.\n
-    Note: entering any command (or pressing the enter key) while the program is paused will immediately unpause. This is intended to aid in timing events with highly variable run time."""
+    Note: entering any command (or pressing the enter key) while the program is paused will immediately unpause. This is intended to aid in timing events with highly variable run time.\n
+    Note: This comamnd will not have any follow-up parameters. Any subsequent parameters will be ignored."""
     Program.interrupt = True
     Program.interrupt_state = 0
     # TODO: Test this code's interaction with flash. Pause on a flash could work with this, but would be super scuffed!
