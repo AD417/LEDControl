@@ -26,8 +26,6 @@ Program = SimpleNamespace(**{
     "real_interval": 1,
     # The interval we give asyncio Timeout to make up for commands taking a while to run.
     "interval": 1,
-    # When the program began.
-    "start": time.time(),
     # Current State:
     # 0: off
     # 1: fill
@@ -39,6 +37,7 @@ Program = SimpleNamespace(**{
     # Maximum of the animation timer.
     "max_animation": 3,
 
+    # INTERRUPTS IN PROGRAM FLOW:
     # If the program's main loop is being interrupted (eg: by a flash.)
     "interrupt": False,
     "interrupt_state": 0,
@@ -46,7 +45,12 @@ Program = SimpleNamespace(**{
     "interrupt_timer": 0,
 
     # SPECIAL STUFF:
+    # The color used when flashing the LEDs. 
     "flash_color": (255,0,63),
+    # The last command used; used for recursion. 
+    "last_command": "",
+    # If "recursion" is enabled currently.
+    "recursion": False
 })
 
 def update_state(): 
@@ -70,6 +74,7 @@ async def on_interrupt(event):
         await asyncio.wait_for(event.wait(), Program.interrupt_timer)
         event.clear()
     except (cf.TimeoutError, asyncio.TimeoutError): pass
+    fill(Program.strip, Color(0,0,0))
 
 async def get_input(event: asyncio.Event): 
     while Program.running:
@@ -78,6 +83,13 @@ async def get_input(event: asyncio.Event):
         except KeyboardInterrupt: 
             # This except never seems to trigger. Ah well. 
             full_command = "exit"
+
+        if Program.recursion:
+            if full_command == "":
+                full_command = Program.last_command
+                await aprint("> Re-executing last command: " + full_command)
+            else:
+                Program.recursion = False
 
         parameters = full_command.split(" ")
         command = parameters.pop(0)
@@ -92,16 +104,43 @@ async def get_input(event: asyncio.Event):
             parameters = await alt_command(parameters, Program)
         elif command == "color":
             parameters = await color_command(parameters, Program)
+        elif command == "pause":
+            parameters = await pause_command(parameters, Program)
         elif command == "exit":
             Program.running = False
         else:
-            await aprint("Invalid command: %s" % full_command)
+            if Program.interrupt and command == "":
+                await aprint(">   Unpausing!")
+                event.set()
+            else:
+                await aprint("Invalid command: %s" % full_command)
             continue
 
-        # if futureState == Program.state: continue
-        # if futureState != -1:
-        #     Program.state = futureState
-        #     Program.same_cmd = False
+        while len(parameters) > 0:
+            # Color command.
+            if parameters[0] == "-c":
+                parameters = await color_command(parameters[1:], Program)
+            # Recursion parameter. 
+            elif parameters[0] == "-e":
+                Program.last_command = full_command
+                if Program.recursion:
+                    await aprint("    Recursion continues. Type anything to break.")
+                else:
+                    await aprint("    Initiating Recursion mode. Hit enter with a blank input to repeat last command.")
+                Program.recursion = True
+                # The next, pause, and recursion parameters are definitionally the last parameter.
+                break
+            elif parameters[0] == "-k": 
+                break
+            elif parameters[0] == "-n":
+                # DO MY COMMAND!
+                break
+            elif parameters[0] == "-p":
+                parameters = await pause_command(parameters[1:], Program)
+                break
+            else: 
+                await aprint("Error processing command args: '%s' is not a valid parameter." % parameters[0])
+                break
         event.set()
 
 async def led_loop(event):
@@ -110,7 +149,8 @@ async def led_loop(event):
             await asyncio.wait_for(event.wait(), Program.interval)
             event.clear()
             # TODO: Add stuff that happens on these events. Maybe flashes of light?
-            update_state()
+            if not Program.interrupt: 
+                update_state()
         except (cf.TimeoutError, asyncio.TimeoutError): pass
 
         # Eventually, other logic will be inserted here. 

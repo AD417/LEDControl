@@ -4,7 +4,7 @@ COLORS = {
     "green": 0x008000,
     "magenta": 0xFF00FF,
     "orange": 0xFF3F00,
-    # Actually purple, but imabalnces cause some interesting behaviour. 
+    # Actually purple, but color imabalnces cause some interesting behaviour. 
     "pink": 0xFF60FF,
     "purple": 0x9400D3,
     "red": 0xFF0000,
@@ -30,6 +30,7 @@ COLOR_SHORTHAND = {
 }
 
 def try_get_color(name: str):
+    name = name.lower()
     color = 0x000000
     if len(name) == 1: 
         try:

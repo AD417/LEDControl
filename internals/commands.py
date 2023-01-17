@@ -1,5 +1,11 @@
 from rpi_ws281x import PixelStrip, Color
-import time
+
+# Define functions which animate LEDs in various ways.
+def fill(strip, color):
+    """Instataneously set the entire array to some color."""
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, color)
+    strip.show()
 
 def set_color(Program, r, g, b) -> bool:
     try: 
@@ -8,32 +14,6 @@ def set_color(Program, r, g, b) -> bool:
         return True
     except ValueError: 
         return False
-
-def fill(strip, color):
-    """Instataneously set the entire array to some color."""
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(i, color)
-    strip.show()
-
-# Define functions which animate LEDs in various ways.
-def colorWipe(strip: PixelStrip, color, wait_ms=50):
-    """Wipe color across display a pixel at a time."""
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(i, color)
-        strip.show()
-        time.sleep(wait_ms / 1000.0)
-
-
-def theaterChase(strip: PixelStrip, color, wait_ms=50, iterations=10):
-    """Movie theater light style chaser animation."""
-    for j in range(iterations):
-        for q in range(3):
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i + q, color)
-            strip.show()
-            time.sleep(wait_ms / 1000.0)
-            for i in range(0, strip.numPixels(), 3):
-                strip.setPixelColor(i + q, 0)
 
 def theaterChaseFrame(strip, color, Program):
     """Movie theater light style chaser animation."""
@@ -53,6 +33,12 @@ def wheel(pos):
     else:
         pos -= 170
         return Color(0, pos * 3, 255 - pos * 3)
+
+def wipe(strip: PixelStrip):
+    """"Wipe" the LED array (set all pixels to 0) for other processing operations."""
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, Color(0,0,0))
+    strip.show()
 
 '''
 def rainbow(strip: PixelStrip, wait_ms: int=20, iterations: int=1):
