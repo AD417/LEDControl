@@ -50,7 +50,9 @@ Program = SimpleNamespace(**{
     # The last command used; used for recursion. 
     "last_command": "",
     # If "recursion" is enabled currently.
-    "recursion": False
+    "recursion": False,
+    # the next command to execute after the interrupt ends.
+    "next_command": "",
 })
 
 def update_state(): 
@@ -76,7 +78,7 @@ async def on_interrupt(event):
     except (cf.TimeoutError, asyncio.TimeoutError): pass
     fill(Program.strip, Color(0,0,0))
 
-async def get_input(event: asyncio.Event): 
+async def get_input(command_executed_event: asyncio.Event): 
     while Program.running:
         try:
             full_command = (await ainput("$ ")).strip()
@@ -90,72 +92,22 @@ async def get_input(event: asyncio.Event):
                 await aprint("> Re-executing last command: " + full_command)
             else:
                 Program.recursion = False
+        
+    do_my_command(full_command, Program, command_executed_event)
 
-        parameters = full_command.split(" ")
-        command = parameters.pop(0)
-
-        if command == "kill" or command == "off":
-            parameters = await kill_command(parameters, Program)
-        elif command == "fill" or command == "on":
-            parameters = await fill_command(parameters, Program)
-        elif command == "flash":
-            parameters = await flash_command(parameters, Program)
-        elif command == "alt": 
-            parameters = await alt_command(parameters, Program)
-        elif command == "color":
-            parameters = await color_command(parameters, Program)
-        elif command == "pause":
-            parameters = await pause_command(parameters, Program)
-        elif command == "exit":
-            Program.running = False
-        else:
-            if Program.interrupt and command == "":
-                await aprint(">   Unpausing!")
-                event.set()
-            else:
-                await aprint("Invalid command: %s" % full_command)
-            continue
-
-        while len(parameters) > 0:
-            # Color command.
-            if parameters[0] == "-c":
-                parameters = await color_command(parameters[1:], Program)
-            # Recursion parameter. 
-            elif parameters[0] == "-e":
-                Program.last_command = full_command
-                if Program.recursion:
-                    await aprint("    Recursion continues. Type anything to break.")
-                else:
-                    await aprint("    Initiating Recursion mode. Hit enter with a blank input to repeat last command.")
-                Program.recursion = True
-                # The next, pause, and recursion parameters are definitionally the last parameter.
-                break
-            elif parameters[0] == "-k": 
-                break
-            elif parameters[0] == "-n":
-                # DO MY COMMAND!
-                break
-            elif parameters[0] == "-p":
-                parameters = await pause_command(parameters[1:], Program)
-                break
-            else: 
-                await aprint("Error processing command args: '%s' is not a valid parameter." % parameters[0])
-                break
-        event.set()
-
-async def led_loop(event):
+async def led_loop(command_executed_event):
     while Program.running: 
         try: 
-            await asyncio.wait_for(event.wait(), Program.interval)
-            event.clear()
+            await asyncio.wait_for(command_executed_event.wait(), Program.interval)
+            command_executed_event.clear()
             # TODO: Add stuff that happens on these events. Maybe flashes of light?
             if not Program.interrupt: 
                 update_state()
         except (cf.TimeoutError, asyncio.TimeoutError): pass
 
         # Eventually, other logic will be inserted here. 
-        if Program.interrupt:   
-            await on_interrupt(event)
+        if Program.interrupt:
+            await on_interrupt(command_executed_event)
             Program.interrupt = False
         on_frame()
     
