@@ -37,6 +37,14 @@ Program = SimpleNamespace(**{
     # Maximum of the animation timer.
     "max_animation": 3,
 
+    # TRANSITIONS BETWEEN PROGRAM FLOWS:
+    # The next state that we are moving into.
+    "next_state": 0,
+    # How far through it we are. 
+    "transition_frame": 0,
+    # The number of steps we are taking.
+    "max_transition_frame": 64,
+
     # INTERRUPTS IN PROGRAM FLOW:
     # If the program's main loop is being interrupted (eg: by a flash.)
     "interrupt": False,
