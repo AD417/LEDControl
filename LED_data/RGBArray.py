@@ -14,7 +14,7 @@ class RGBArray():
             self._array.append(RGB(0,0,0))
 
     def send_output_to(self: RGBArray, strip: PixelStrip, update: bool = True):
-        """Send the data from the RGB Array to the pixel strip output. \n
+        """Send the data from the RGB Array to the pixel_id strip output. \n
         Parameters: 
         `strip`: The rpi_ws281x PixelStrip we are putting the data in.
         `update`: Whether the PixelStrip should immediately update after this operation."""
