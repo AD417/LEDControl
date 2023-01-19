@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from aio_stdout import aprint
-import asyncio
+import asyncio 
 from .utils import try_num
 from .LED_data import *
 
@@ -22,8 +22,8 @@ async def do_my_command(full_command: str, Program):
         parameters = await kill_command(parameters, Program)
     elif command == "fill" or command == "on":
         parameters = await fill_command(parameters, Program)
-    # elif command == "flash":
-    #     parameters = await flash_command(parameters, Program)
+    elif command == "flash":
+        parameters = await flash_command(parameters, Program)
     elif command == "alt": 
         parameters = await alt_command(parameters, Program)
     elif command == "color":
@@ -31,13 +31,13 @@ async def do_my_command(full_command: str, Program):
     # elif command == "pause":
     #     parameters = await pause_command(parameters, Program)
     elif command == "exit":
-        Program.running = False
+        Program.is_running = False
     else:
-        # if Program.interrupt and command == "":
-        #     await aprint(">   Unpausing!")
-        #     command_executed_event.set()
-        # else:
-        await aprint("Invalid command: %s" % full_command)
+        if Program.is_interrupted and command == "":
+            await aprint(">   Interpreting null command as request to end interrupt.")
+            Program.is_interrupted = False
+        else:
+            await aprint("Invalid command: %s" % full_command)
         return
 
     Program.next_command = ""
@@ -57,12 +57,12 @@ async def do_my_command(full_command: str, Program):
                 # Most parameters are, by design, only ever the last parameter.
                 break
             elif parameters[0] == "-k": 
-                if not Program.interrupt:
+                if not Program.is_interrupted:
                     await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
                     break
                 parameters = await kill_parameter(parameters[1:], Program)
             elif parameters[0] == "-n":
-                if not Program.interrupt:
+                if not Program.is_interrupted:
                     await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
                     break
                 await next_command(parameters[1:], Program)
@@ -121,22 +121,24 @@ async def color_command(parameters: list[str], Program):
         return parameters
 
     color_name = parameters[0]
-    if len(color_name) == 1: color_name = color_constants.unshorten_color(color_name)
+    print(len(color_name))
+    if len(color_name) == 1: 
+        color_name = color_constants.unshorten_color(color_name)
 
     if color_name == "custom": 
         return await custom_color_command(parameters, Program)
 
-    success, color = color_constants.try_get_color(parameters[0])
+    success, color = color_constants.try_get_color(color_name)
     if not success: 
         await aprint("""ERROR: "%s" is not a valid color!""" % parameters[0])
         return []
 
     has_flash_parameter = len(parameters) > 1 and parameters[1] == "-f"
 
-    if Program.interrupt or has_flash_parameter: 
+    if Program.is_interrupted or has_flash_parameter: 
         Program.flash_color = color
         await aprint(">   Flash color has been changed to: " + color_name)
-        if Program.interrupt and not has_flash_parameter: 
+        if Program.is_interrupted and not has_flash_parameter: 
             return parameters[1:]
         return parameters[2:]
 
@@ -167,13 +169,19 @@ async def custom_color_command(parameters: list[str], Program):
     if max(r,g,b) > 255 or min(r,g,b) < 0:
         await aprint(">   ERROR: Value out of range: %s %s %s" % tuple(parameters[1:4]))
         return parameters[4:]
-    if Program.interrupt:
-        Program.flash_color = RGB(r,g,b)
-        await aprint(">   Flash color changed to a custom color: %s" % str(color))
-    else:
-        Program.color = RGB(r,g,b)
-        Program.animation.update_color_to(RGB(r,g,b))
-        await aprint(">   Primary color changed to a custom color: %s" % str(color))
+
+    color = RGB(r,g,b)
+
+    has_flash_parameter = len(parameters) > 4 and parameters[4] == "-f"
+
+    if Program.is_interrupted or has_flash_parameter:
+        Program.flash_color = color
+        await aprint(">   Flash color changed to a custom color: %s" % repr(color))
+        return parameters[5:]
+
+    Program.color = color
+    Program.animation.update_color_to(color)
+    await aprint(">   Primary color changed to a custom color: %s" % repr(color))
     return parameters[4:]
 
 async def fill_command(parameters: list[str], Program):
@@ -190,19 +198,22 @@ async def flash_command(parameters: list[str], Program):
     """INTERRUPT: Override the current state of the lights and flash a color. This color may be different from the base color used by the rest of the program.\n
     Legal Parameters:
     `flash_time_ms`: The amount of time that the program spends in this flash state, in milliseconds. Default 1000ms. Must be greater than 0."""
-    Program.interrupt = True
+
+    flash_time_sec = 1
+    used_params = 0
+
+    if len(parameters) > 0:
+        flash_time_sec = try_num(parameters[0]) * 0.001
+        if flash_time_sec > 0:
+            used_params += 1
+        else: 
+            flash_time_sec = 1
+
+    Program.interrupt = FlashAnimation(Program.flash_color, flash_time_sec)
+    Program.is_interrupted = True
     await aprint(">   Flashing!")
-    Program.interrupt_state = 1
-    if len(parameters) == 0: 
-        Program.interrupt_timer = 1
-        await aprint("    For: 1000ms")
-        return parameters
-    
-    flash_time_ms = try_num(parameters[0])
-    if flash_time_ms <= 0: flash_time_ms = 1000
-    Program.interrupt_timer = flash_time_ms * 0.001
-    await aprint("    For: %sms" % int(flash_time_ms))
-    return parameters[1:]
+    await aprint("    For: %ims" % int(flash_time_sec * 1000))
+    return parameters[used_params:]
 
 async def kill_command(parameters: list[str], Program):
     """Completely disable the lights, setting all pixels to `RGB(0,0,0)` (black).\n
@@ -238,7 +249,7 @@ async def pause_command(parameters: list[str], Program):
     `pause_time_ms`: The amount of time to pause, in milliseconds. Default Infinity. Must be at least 50ms.\n
     Note: entering any command (or pressing the enter key) while the program is paused will immediately unpause. This is intended to aid in timing events with highly variable run time.\n
     Note: This comamnd will not have any follow-up parameters. Any subsequent parameters will be ignored."""
-    Program.interrupt = True
+    Program.is_interrupted = True
     Program.interrupt_state = 0
     # TODO: Test this code's interaction with flash. Pause on a flash could work with this, but would be super scuffed!
     if len(parameters) == 0:

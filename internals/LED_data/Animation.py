@@ -2,7 +2,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from .RGB import RGB
 import time
-from typing import Any  
+from typing import Any
 
 class Animation(metaclass=ABCMeta):
     interrupt: bool = False

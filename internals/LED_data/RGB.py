@@ -28,7 +28,7 @@ class RGB():
 
     def __int__(self: RGB) -> int:
         """Convert the provided RGB color to a 24-bit color value. Conversion for the rpi_ws281x library."""
-        return (self.r << 16) | (self.g << 8) | self.b
+        return (self.r << 16) | (self.b << 8) | self.g
     
     def __repr__(self: RGB) -> str:
         """Convert the provided RGB color to a human-readable representation."""

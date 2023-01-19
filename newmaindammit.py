@@ -3,8 +3,7 @@ from rpi_ws281x import PixelStrip, Color
 import asyncio
 import concurrent.futures as cf
 from types import SimpleNamespace
-from internals.commands import *
-from internals.command_handler import *
+from internals.command_handler import do_my_command
 from internals.LED_data import *
 
 
@@ -28,35 +27,38 @@ Program = SimpleNamespace(**{
     # The LED array.
     "strip": PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL),
     # Whether the program is running.
-    "running": True,
+    "is_running": True,
     # The current animation used by the strip
     "animation": KillAnimation(),
 
     "color": RGB(255,0,0),
-    "interrupt": False
+    "is_interrupted": False,
+    "interrupt": FlashAnimation(),
+
+    "flash_color": RGB(255,255,255)
 })
 
 def on_frame():
     ARRAY.update_strip_using(Program.animation)
     ARRAY.send_output_to(STRIP)
 
-async def on_interrupt(event):
-    if Program.interrupt_state == 1:
-        fill(Program.strip, Color(*Program.flash_color))
-    # If interrupt is 0, then we simply pause. Free command!
-    try: 
-        await asyncio.wait_for(event.wait(), Program.interrupt_timer)
-        event.clear()
-    except (cf.TimeoutError, asyncio.TimeoutError): pass
-    fill(Program.strip, Color(0,0,0))
-    if Program.next_command != "":
-        # Not sure why this line is needed. But it does. But it's probably better. 
-        cmd = Program.next_command
-        Program.next_command = ""
-        await do_my_command(cmd, Program, event)
+def on_interrupt():
+    if type(Program.interrupt) != PauseAnimation:
+        ARRAY.update_strip_using(Program.interrupt)
+        ARRAY.send_output_to(STRIP)
+    
+    if Program.interrupt.is_complete(): 
+        Program.is_interrupted = False
+
+    ####fill(Program.strip, Color(0,0,0))
+    # if Program.next_command != "":
+    #     # Not sure why this line is needed. But it does. But it's probably better. 
+    #     cmd = Program.next_command
+    #     Program.next_command = ""
+    #     await do_my_command(cmd, Program, event)
 
 async def get_input(): 
-    while Program.running:
+    while Program.is_running:
         try:
             full_command = (await ainput("$ ")).strip().lower()
         except KeyboardInterrupt: 
@@ -64,10 +66,14 @@ async def get_input():
             full_command = "exit"
         
         await do_my_command(full_command, Program)
+    print("After SegFault?")
 
 async def led_loop():
-    while Program.running: 
-        on_frame()
+    while Program.is_running: 
+        if Program.is_interrupted:
+            on_interrupt()
+        else:
+            on_frame()
         # Yield execution to the get_input asyncio loop, if necessary.
         # Python cannot parallel process, unfortunately. 
         await asyncio.sleep(0.001)

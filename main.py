@@ -3,7 +3,6 @@ from rpi_ws281x import PixelStrip, Color
 import asyncio
 import concurrent.futures as cf
 from types import SimpleNamespace
-from internals.commands import *
 from internals.command_handler import *
 from internals.utils import try_num # TODO: unnecessary import, remove.
 
@@ -65,11 +64,11 @@ async def on_interrupt(event):
         event.clear()
     except (cf.TimeoutError, asyncio.TimeoutError): pass
     fill(Program.strip, Color(0,0,0))
-    if Program.next_command != "":
-        # Not sure why this line is needed. But it does. But it's probably better. 
-        cmd = Program.next_command
-        Program.next_command = ""
-        await do_my_command(cmd, Program, event)
+        if Program.next_command != "":
+            # Not sure why this line is needed. But it does. But it's probably better. 
+            cmd = Program.next_command
+            Program.next_command = ""
+            await do_my_command(cmd, Program, event)
 
 async def get_input(command_executed_event: asyncio.Event): 
     while Program.running:
