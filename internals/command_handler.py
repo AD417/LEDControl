@@ -45,17 +45,17 @@ async def do_my_command(full_command: str, Program):
         # Color command.
         if parameters[0] == "-c":
             parameters = await color_command(parameters[1:], Program)
+        # Recursion parameter. 
+        elif parameters[0] == "-e":
+            Program.recursive_command = full_command
+            if Program.performing_recursion:
+                await aprint("    Recursion continues. Type anything to break.")
+            else:
+                await aprint("    Initiating Recursion mode. Hit enter with a blank input to repeat last command.")
+            Program.performing_recursion = True
+            # Most parameters are, by design, only ever the last parameter.
+            break
             '''
-            # Recursion parameter. 
-            elif parameters[0] == "-e":
-                Program.last_command = full_command
-                if Program.recursion:
-                    await aprint("    Recursion continues. Type anything to break.")
-                else:
-                    await aprint("    Initiating Recursion mode. Hit enter with a blank input to repeat last command.")
-                Program.recursion = True
-                # Most parameters are, by design, only ever the last parameter.
-                break
             elif parameters[0] == "-k": 
                 if not Program.is_interrupted:
                     await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)

@@ -24,8 +24,6 @@ STRIP.begin()
 
 # """Handles general switching in program flow."""
 Program = SimpleNamespace(**{
-    # The LED array.
-    "strip": PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL),
     # Whether the program is running.
     "is_running": True,
     # The current animation used by the strip
@@ -35,7 +33,10 @@ Program = SimpleNamespace(**{
     "is_interrupted": False,
     "interrupt": FlashAnimation(),
 
-    "flash_color": RGB(255,255,255)
+    "flash_color": RGB(255,255,255),
+    "performing_recursion": False,
+    "recursive_command": "",
+    "next_command": "",
 })
 
 def on_frame():
@@ -50,13 +51,6 @@ def on_interrupt():
     if Program.interrupt.is_complete(): 
         Program.is_interrupted = False
 
-    ####fill(Program.strip, Color(0,0,0))
-    # if Program.next_command != "":
-    #     # Not sure why this line is needed. But it does. But it's probably better. 
-    #     cmd = Program.next_command
-    #     Program.next_command = ""
-    #     await do_my_command(cmd, Program, event)
-
 async def get_input(): 
     while Program.is_running:
         try:
@@ -65,8 +59,10 @@ async def get_input():
             # This except never seems to trigger. Ah well. 
             full_command = "exit"
         
+        if full_command == "" and Program.performing_recursion:
+            full_command = Program.recursive_command
+
         await do_my_command(full_command, Program)
-    print("After SegFault?")
 
 async def led_loop():
     while Program.is_running: 
