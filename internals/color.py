@@ -50,11 +50,6 @@ def interpolate_color(color1: tuple[int], color2: tuple[int], percentage: float)
 def try_get_color(name: str):
     name = name.lower()
     color = 0x000000
-    if len(name) == 1: 
-        try:
-            name = COLOR_SHORTHAND[name]
-        except KeyError:
-            return False, (0,0,0)
     # Check to make sure the color specified actually exists. 
     try: 
         color = COLORS[name]

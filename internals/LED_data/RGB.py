@@ -24,7 +24,7 @@ class RGB():
         b = round(self.b * percent + other.b * (1 - percent))
         return RGB(r, g, b)
 
-    ##### DUNDER METHODS!
+    ##### DUNDER METHODS
 
     def __int__(self: RGB) -> int:
         """Convert the provided RGB color to a 24-bit color value. Conversion for the rpi_ws281x library."""
@@ -37,23 +37,6 @@ class RGB():
     def __str__(self: RGB) -> str:
         """Convert the provided RGB color to a hexadecimal representation (eg: #000000)"""
         return f"#{hex(self.r)[2:]:0>2}{hex(self.g)[2:]:0>2}{hex(self.b)[2:]:0>2}"
-
-
-    ##### CONSTANTS
-
-    colors = {
-        "black": 0x000000,
-        "blue": 0x0000FF,
-        "green": 0x008000,
-        "magenta": 0xFF00FF,
-        "orange": 0xFF3F00,
-        # Actually purple, but color imabalnces cause some interesting behaviour. 
-        "pink": 0xFF60FF,
-        "purple": 0x9400D3,
-        "red": 0xFF0000,
-        "white": 0xFFFFFF,
-        "yellow": 0xFF8F00,
-    }
 
 
 if __name__ == "__main__":

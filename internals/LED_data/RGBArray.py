@@ -1,5 +1,6 @@
 from __future__ import annotations
-from RGB import RGB
+from .Animation import Animation
+from .RGB import RGB
 from rpi_ws281x import PixelStrip
 import time
 
@@ -12,6 +13,10 @@ class RGBArray():
 
         for _ in range(array_length): 
             self._array.append(RGB(0,0,0))
+
+    def update_strip_using(self: RGBArray, animation: Animation):
+        for pixel in range(self.size):
+            self._array[pixel] = animation.pixel_state(pixel)
 
     def send_output_to(self: RGBArray, strip: PixelStrip, update: bool = True):
         """Send the data from the RGB Array to the pixel_id strip output. \n

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from aio_stdout import ainput, aprint
+from aio_stdout import aprint
 import asyncio
 from .utils import try_num
-from .color import try_get_color, unshorten_color
+from .LED_data import *
 
-async def do_my_command(full_command: str, Program, command_executed_event: asyncio.Event):
+async def do_my_command(full_command: str, Program):
     """Execute a command providded by the user.\n
     Valid commands / basic info: \n
     `kill` / `off`: Kill the lights\n
@@ -22,22 +22,22 @@ async def do_my_command(full_command: str, Program, command_executed_event: asyn
         parameters = await kill_command(parameters, Program)
     elif command == "fill" or command == "on":
         parameters = await fill_command(parameters, Program)
-    elif command == "flash":
-        parameters = await flash_command(parameters, Program)
+    # elif command == "flash":
+    #     parameters = await flash_command(parameters, Program)
     elif command == "alt": 
         parameters = await alt_command(parameters, Program)
     elif command == "color":
         parameters = await color_command(parameters, Program)
-    elif command == "pause":
-        parameters = await pause_command(parameters, Program)
+    # elif command == "pause":
+    #     parameters = await pause_command(parameters, Program)
     elif command == "exit":
         Program.running = False
     else:
-        if Program.interrupt and command == "":
-            await aprint(">   Unpausing!")
-            command_executed_event.set()
-        else:
-            await aprint("Invalid command: %s" % full_command)
+        # if Program.interrupt and command == "":
+        #     await aprint(">   Unpausing!")
+        #     command_executed_event.set()
+        # else:
+        await aprint("Invalid command: %s" % full_command)
         return
 
     Program.next_command = ""
@@ -45,34 +45,35 @@ async def do_my_command(full_command: str, Program, command_executed_event: asyn
         # Color command.
         if parameters[0] == "-c":
             parameters = await color_command(parameters[1:], Program)
-        # Recursion parameter. 
-        elif parameters[0] == "-e":
-            Program.last_command = full_command
-            if Program.recursion:
-                await aprint("    Recursion continues. Type anything to break.")
-            else:
-                await aprint("    Initiating Recursion mode. Hit enter with a blank input to repeat last command.")
-            Program.recursion = True
-            # Most parameters are, by design, only ever the last parameter.
-            break
-        elif parameters[0] == "-k": 
-            if not Program.interrupt:
-                await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
+            '''
+            # Recursion parameter. 
+            elif parameters[0] == "-e":
+                Program.last_command = full_command
+                if Program.recursion:
+                    await aprint("    Recursion continues. Type anything to break.")
+                else:
+                    await aprint("    Initiating Recursion mode. Hit enter with a blank input to repeat last command.")
+                Program.recursion = True
+                # Most parameters are, by design, only ever the last parameter.
                 break
-            parameters = await kill_parameter(parameters[1:], Program)
-        elif parameters[0] == "-n":
-            if not Program.interrupt:
-                await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
+            elif parameters[0] == "-k": 
+                if not Program.interrupt:
+                    await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
+                    break
+                parameters = await kill_parameter(parameters[1:], Program)
+            elif parameters[0] == "-n":
+                if not Program.interrupt:
+                    await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
+                    break
+                await next_command(parameters[1:], Program)
                 break
-            await next_command(parameters[1:], Program)
-            break
-        elif parameters[0] == "-p":
-            parameters = await pause_command(parameters[1:], Program)
-            break
+            elif parameters[0] == "-p":
+                parameters = await pause_command(parameters[1:], Program)
+                break
+            '''
         else: 
             await aprint("Error processing command args: '%s' is not a valid parameter." % parameters[0])
             break
-    command_executed_event.set()
 
 
 async def alt_command(parameters: list[str], Program):
@@ -80,32 +81,32 @@ async def alt_command(parameters: list[str], Program):
     Set the state of the LEDs to alternate in a theater chase.\n
     Legal parameters:
     `Interval`: The amount of time between frames while alternating, in milliseconds. Default 500. Value must be at least 50.
-    `Width`: The frequency of lit pixels, in terms of the number of LEDs between Lit pixels. Default 3. Value must be at least 2."""
-    Program.interrupt = False
-    Program.state = 2
-    interval_ms = 500
+    `Width`: The frequency of lit pixels, in terms of the number of LEDs between Lit pixels. Default 3. Value must be at least 2.
+    """
+
+    interval_sec = 0.5
     width = 3
     used_params = 0
 
     if len(parameters) > 0:
-        interval_ms = try_num(parameters[0])
-    if interval_ms >= 50: 
-        Program.interval = interval_ms * 0.001
-        used_params = 1
-    else: 
-        Program.interval = 0.5
+        interval_sec = try_num(parameters[0]) * 0.001
+        if interval_sec >= 0.05: 
+            used_params = 1
+        else:
+            interval_sec = 0.5
 
     if used_params == 1 and len(parameters) > 1: 
-        width = try_num(parameters[1])
-    if width > 1: 
-        Program.max_animation = int(width)
-        used_params = 2
-    else: 
-        Program.max_animation = 3
+        width = int(try_num(parameters[1]))
+        if width > 1: 
+            used_params += 1
+        else:
+            width = 3
+
+    Program.animation = AlternatingAnimation(RGB(255,0,0), interval_sec, width)
 
     await aprint(">   Theather Chase time!")
-    await aprint(f"    Alternates every {int(1000 * Program.interval)}ms")
-    await aprint(f"    1 in {int(Program.max_animation)} LEDs is lit.")
+    await aprint(f"    Alternates every {int(1000 * interval_sec)}ms")
+    await aprint(f"    1 in {width} LEDs is lit.")
 
     return parameters[used_params:]
 
@@ -120,15 +121,15 @@ async def color_command(parameters: list[str], Program):
         return parameters
 
     color_name = parameters[0]
-    if len(color_name) == 1: color_name = unshorten_color(color_name)
+    if len(color_name) == 1: color_name = color_constants.unshorten_color(color_name)
 
     if color_name == "custom": 
         return await custom_color_command(parameters, Program)
 
-    success, color = try_get_color(parameters[0])
+    success, color = color_constants.try_get_color(parameters[0])
     if not success: 
         await aprint("""ERROR: "%s" is not a valid color!""" % parameters[0])
-        return parameters
+        return []
 
     has_flash_parameter = len(parameters) > 1 and parameters[1] == "-f"
 
@@ -141,6 +142,7 @@ async def color_command(parameters: list[str], Program):
 
     else: 
         Program.color = color
+        Program.animation.update_color_to(color)
         await aprint(">   Primary color has been changed to: " + color_name)
         return parameters[1:]
 
@@ -166,20 +168,20 @@ async def custom_color_command(parameters: list[str], Program):
         await aprint(">   ERROR: Value out of range: %s %s %s" % tuple(parameters[1:4]))
         return parameters[4:]
     if Program.interrupt:
-        Program.flash_color = (r,g,b)
-        await aprint(">   Flash color changed to a custom color: RGB(%s, %s, %s)" % tuple(parameters[1:4]))
+        Program.flash_color = RGB(r,g,b)
+        await aprint(">   Flash color changed to a custom color: %s" % str(color))
     else:
-        Program.color = (r,g,b)
-        await aprint(">   Primary color changed to a custom color: RGB(%s, %s, %s)" % tuple(parameters[1:4]))
+        Program.color = RGB(r,g,b)
+        Program.animation.update_color_to(RGB(r,g,b))
+        await aprint(">   Primary color changed to a custom color: %s" % str(color))
     return parameters[4:]
 
 async def fill_command(parameters: list[str], Program):
     """Fill the lights with a single color.\n
     Legal Parameters:
     None"""
-    Program.interrupt = False
-    Program.state = 1
-    # TODO: Fadein animation data
+
+    Program.animation = FillAnimation(color=RGB(255,0,0))
 
     await aprint(">   Lights on!")
     return parameters
@@ -206,9 +208,8 @@ async def kill_command(parameters: list[str], Program):
     """Completely disable the lights, setting all pixels to `RGB(0,0,0)` (black).\n
     Legal Parameters:
     None"""
-    Program.interrupt = False
-    Program.state = 0
-    # TODO: Fadeout animation data
+
+    Program.animation = KillAnimation()
 
     await aprint(">   Killing the lights!")
     return parameters

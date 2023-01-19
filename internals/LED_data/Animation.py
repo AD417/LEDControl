@@ -1,25 +1,25 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod
-from RGB import RGB
+from .RGB import RGB
 import time
-from typing import Any
+from typing import Any  
 
 class Animation(metaclass=ABCMeta):
     interrupt: bool = False
     continuum: bool = False
-    def __init__(self: Animation, color: RGB, frame_interval_sec: float = 0, /, **config):
+    def __init__(self: Animation, color: RGB = RGB(0,0,0), frame_interval_sec: float = 0):
         self.color = color
         self.frame_interval_sec: float = frame_interval_sec
         self.start_time: float = time.time()
 
     def frame(self: Animation) -> int|float:
         """Determine the current frame of the animation, based on the time passed since the program began."""
-        if self.frame_interval <= 0: return 0
+        if self.frame_interval_sec <= 0: return 0
         frame = (time.time() - self.start_time) / self.frame_interval_sec
         if self.continuum: return frame
         return int(frame)
 
-    def update_color(self: Animation, new_color: RGB):
+    def update_color_to(self: Animation, new_color: RGB):
         self.color = new_color
 
     @abstractmethod
