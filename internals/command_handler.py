@@ -55,18 +55,18 @@ async def do_my_command(full_command: str, Program):
             Program.performing_recursion = True
             # Most parameters are, by design, only ever the last parameter.
             break
-            '''
-            elif parameters[0] == "-k": 
-                if not Program.is_interrupted:
-                    await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
-                    break
-                parameters = await kill_parameter(parameters[1:], Program)
-            elif parameters[0] == "-n":
-                if not Program.is_interrupted:
-                    await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
-                    break
-                await next_command(parameters[1:], Program)
+        elif parameters[0] == "-k": 
+            if not Program.is_interrupted:
+                await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
                 break
+            parameters = await kill_parameter(parameters[1:], Program)
+        elif parameters[0] == "-n":
+            if not Program.is_interrupted:
+                await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
+                break
+            await next_command(parameters[1:], Program)
+            break
+            '''
             elif parameters[0] == "-p":
                 parameters = await pause_command(parameters[1:], Program)
                 break
@@ -137,6 +137,7 @@ async def color_command(parameters: list[str], Program):
 
     if Program.is_interrupted or has_flash_parameter: 
         Program.flash_color = color
+        Program.interrupt.update_color_to(color)
         await aprint(">   Flash color has been changed to: " + color_name)
         if Program.is_interrupted and not has_flash_parameter: 
             return parameters[1:]
@@ -176,6 +177,7 @@ async def custom_color_command(parameters: list[str], Program):
 
     if Program.is_interrupted or has_flash_parameter:
         Program.flash_color = color
+        Program.interrupt.update_color_to(color)
         await aprint(">   Flash color changed to a custom color: %s" % repr(color))
         return parameters[5:]
 
@@ -232,16 +234,15 @@ async def kill_parameter(parameters: list[str], Program):
     await next_command(["kill"], Program)
     return parameters
 
-
 async def next_command(parameters: list[str], Program):
     """Set the command that executes immediately after the pending interrupt. (Interrupts are signified by `INTERRUPT` in the documentation.\n
     Legal Parameters:
     `command`: The command to be executed. This consists of the rest of the parameters in the command.\n
     Note: This command will not have any follow-up parameters."""
     Program.next_command = " ".join(parameters)
+    Program.performing_next_command = True
     await aprint("    Next command set to: " + Program.next_command)
     return []
-
 
 async def pause_command(parameters: list[str], Program):
     """INTERRUPT: Halt all execution. This halt may be either indefinite or for a set interval, based on supplied parameters.

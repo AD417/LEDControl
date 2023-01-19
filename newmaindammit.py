@@ -36,20 +36,24 @@ Program = SimpleNamespace(**{
     "flash_color": RGB(255,255,255),
     "performing_recursion": False,
     "recursive_command": "",
+    "performing_next_command": False,
     "next_command": "",
 })
 
-def on_frame():
+async def on_frame():
     ARRAY.update_strip_using(Program.animation)
     ARRAY.send_output_to(STRIP)
 
-def on_interrupt():
+async def on_interrupt():
     if type(Program.interrupt) != PauseAnimation:
         ARRAY.update_strip_using(Program.interrupt)
         ARRAY.send_output_to(STRIP)
     
     if Program.interrupt.is_complete(): 
         Program.is_interrupted = False
+        if Program.performing_next_command:
+            Program.performing_next_command = False
+            await do_my_command(Program.next_command, Program)
 
 async def get_input(): 
     while Program.is_running:
@@ -67,9 +71,9 @@ async def get_input():
 async def led_loop():
     while Program.is_running: 
         if Program.is_interrupted:
-            on_interrupt()
+            await on_interrupt()
         else:
-            on_frame()
+            await on_frame()
         # Yield execution to the get_input asyncio loop, if necessary.
         # Python cannot parallel process, unfortunately. 
         await asyncio.sleep(0.001)
