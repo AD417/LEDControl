@@ -7,7 +7,7 @@ from .InterruptAnimation import InterruptAnimation
 from .KillAnimation import KillAnimation
 from .RGB import RGB
 from .RGBArray import RGBArray
-from .PauseAnimation import PauseAnimation
+# from .PauseAnimation import PauseAnimation
 from .TransitionAnimation import TransitionAnimation
 
 __all__ = [
@@ -18,7 +18,7 @@ __all__ = [
     "FlashAnimation",
     "InterruptAnimation",
     "KillAnimation",
-    "PauseAnimation",
+    # "PauseAnimation",
     "RGB",
     "RGBArray",
     "TransitionAnimation",

@@ -1,7 +1,7 @@
-from aio_stdout import ainput, aprint
-from rpi_ws281x import PixelStrip, Color
+from aio_stdout import ainput
+from rpi_ws281x import PixelStrip
 import asyncio
-import concurrent.futures as cf
+import time
 from types import SimpleNamespace
 from internals.command_handler import do_my_command
 from internals.LED_data import *
@@ -38,6 +38,8 @@ Program = SimpleNamespace(**{
     "recursive_command": "",
     "performing_next_command": False,
     "next_command": "",
+    "is_paused": False,
+    "time_to_unpause": 0,
 })
 
 async def on_frame():
@@ -45,9 +47,8 @@ async def on_frame():
     ARRAY.send_output_to(STRIP)
 
 async def on_interrupt():
-    if type(Program.interrupt) != PauseAnimation:
-        ARRAY.update_strip_using(Program.interrupt)
-        ARRAY.send_output_to(STRIP)
+    ARRAY.update_strip_using(Program.interrupt)
+    ARRAY.send_output_to(STRIP)
     
     if Program.interrupt.is_complete(): 
         Program.is_interrupted = False
@@ -70,13 +71,18 @@ async def get_input():
 
 async def led_loop():
     while Program.is_running: 
+        # Yield execution to the get_input asyncio loop, if necessary.
+        # Python cannot parallel process, unfortunately. 
+        await asyncio.sleep(0.001)
+        if Program.is_paused: 
+            if time.time() > Program.time_to_unpause:
+                Program.is_paused = False
+            else:
+                continue
         if Program.is_interrupted:
             await on_interrupt()
         else:
             await on_frame()
-        # Yield execution to the get_input asyncio loop, if necessary.
-        # Python cannot parallel process, unfortunately. 
-        await asyncio.sleep(0.001)
 
     ARRAY.update_strip_using(KillAnimation())
     ARRAY.send_output_to(STRIP)

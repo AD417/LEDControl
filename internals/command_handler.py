@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from aio_stdout import aprint
 import asyncio 
+import time
 from .utils import try_num
 from .LED_data import *
 
@@ -66,11 +67,8 @@ async def do_my_command(full_command: str, Program):
                 break
             await next_command(parameters[1:], Program)
             break
-            '''
-            elif parameters[0] == "-p":
-                parameters = await pause_command(parameters[1:], Program)
-                break
-            '''
+        elif parameters[0] == "-p":
+            parameters = await pause_command(parameters[1:], Program)
         else: 
             await aprint("Error processing command args: '%s' is not a valid parameter." % parameters[0])
             break
@@ -250,19 +248,20 @@ async def pause_command(parameters: list[str], Program):
     `pause_time_ms`: The amount of time to pause, in milliseconds. Default Infinity. Must be at least 50ms.\n
     Note: entering any command (or pressing the enter key) while the program is paused will immediately unpause. This is intended to aid in timing events with highly variable run time.\n
     Note: This comamnd will not have any follow-up parameters. Any subsequent parameters will be ignored."""
-    Program.is_interrupted = True
-    Program.interrupt_state = 0
-    # TODO: Test this code's interaction with flash. Pause on a flash could work with this, but would be super scuffed!
-    if len(parameters) == 0:
-        # An arbitrarily large number. 
-        Program.interrupt_timer = 100000
-        await aprint(">   Paused!")
-        return [] # parameters
-    pause_time_ms = try_num(parameters[0])
-    if pause_time_ms < 50:
-        await aprint(">   Paused! (Expected parameter 'time' not valid)")
-        Program.interrupt_timer = 100000
-        return parameters
-    Program.interrupt_timer = pause_time_ms * 0.001
-    await aprint(">   Paused for %sms!" % int(pause_time_ms))
-    return [] # parameters[1:]
+    pause_time_sec = 0
+    used_params = 0
+
+    if len(parameters) > 0:
+        pause_time_sec = try_num(parameters[0]) * 0.001
+        if pause_time_sec > 0:
+            used_params += 1
+
+    if pause_time_sec == 0:
+        Program.time_to_unpause = time.time() + 99999999
+        await aprint(">   Paused! (Press Enter to resume)")
+    else: 
+        Program.time_to_unpause = time.time() + pause_time_sec
+        await aprint("> Paused for %ims" % int(pause_time_sec * 1000))
+
+    Program.is_paused = True
+    return parameters[used_params:]
