@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod
-from .RGB import RGB
+from ..RGB import RGB
 import time
 from typing import Any
 

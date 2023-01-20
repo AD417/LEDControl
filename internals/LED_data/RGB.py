@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 
 class RGB():
     """A singular RGB Pixel, storing a LED's state as a series of numbers. \n
@@ -23,6 +24,12 @@ class RGB():
         g = round(other.g * percent + self.g * (1 - percent))
         b = round(other.b * percent + self.b * (1 - percent))
         return RGB(r, g, b)
+
+    def gamma_correct(self: RGB, exponent: float = 2.7) -> RGB:
+        r = round(255 * math.pow(self.r / 255, exponent))
+        g = round(255 * math.pow(self.g / 255, exponent))
+        b = round(255 * math.pow(self.b / 255, exponent))
+        return RGB(r,g,b)
 
     ##### DUNDER METHODS
 

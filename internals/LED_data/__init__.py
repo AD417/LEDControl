@@ -1,14 +1,15 @@
-from .AlternatingAnimation import AlternatingAnimation
-from .Animation import Animation
+from ._Animation.AlternatingAnimation import AlternatingAnimation
+from ._Animation.Animation import Animation
 from . import color_constants
-from .FillAnimation import FillAnimation
-from .FlashAnimation import FlashAnimation
-from .InterruptAnimation import InterruptAnimation
-from .KillAnimation import KillAnimation
+from ._Animation.FillAnimation import FillAnimation
+from ._Interrupt.FlashAnimation import FlashAnimation
+from ._Interrupt.InterruptAnimation import InterruptAnimation
+from ._Animation.KillAnimation import KillAnimation
+from ._Animation.PulseAnimation import PulseAnimation
 from .RGB import RGB
 from .RGBArray import RGBArray
-# from .PauseAnimation import PauseAnimation
-from .TransitionAnimation import TransitionAnimation
+from ._Animation.TransitionAnimation import TransitionAnimation
+from ._Animation.WaveAnimation import WaveAnimation
 
 __all__ = [
     "AlternatingAnimation",
@@ -18,8 +19,9 @@ __all__ = [
     "FlashAnimation",
     "InterruptAnimation",
     "KillAnimation",
-    # "PauseAnimation",
+    "PulseAnimation",
     "RGB",
     "RGBArray",
     "TransitionAnimation",
+    "WaveAnimation"
 ]

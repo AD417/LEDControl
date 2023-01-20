@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .Animation import Animation
+from ._Animation.Animation import Animation
 from .RGB import RGB
 from rpi_ws281x import PixelStrip
 import time
@@ -8,7 +8,7 @@ class RGBArray():
     def __init__(self: RGBArray, array_length: int):
         assert array_length > 0
 
-        self._array = []
+        self._array: list[RGB] = []
         self.size = array_length
 
         for _ in range(array_length): 
@@ -25,7 +25,7 @@ class RGBArray():
         `update`: Whether the PixelStrip should immediately update after this operation."""
         assert self.size >= strip.numPixels()
         for i in range(strip.numPixels()):
-            strip.setPixelColor(i, int(self._array[i]))
+            strip.setPixelColor(i, int(self._array[i].gamma_correct()))
         if update: strip.show()
 
     def __repr__(self: RGBArray) -> str:

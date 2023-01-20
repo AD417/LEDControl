@@ -19,20 +19,24 @@ async def do_my_command(full_command: str):
     parameters = full_command.split(" ")
     command = parameters.pop(0)
 
-    if command == "kill" or command == "off":
-        parameters = await kill_command(parameters)
-    elif command == "fill" or command == "on":
-        parameters = await fill_command(parameters)
-    elif command == "flash":
-        parameters = await flash_command(parameters)
-    elif command == "alt": 
+    if command == "alt": 
         parameters = await alt_command(parameters)
     elif command == "color":
         parameters = await color_command(parameters)
-    elif command == "pause":
-        parameters = await pause_command(parameters)
     elif command == "exit":
         Program.is_running = False
+    elif command == "flash":
+        parameters = await flash_command(parameters)
+    elif command == "fill" or command == "on":
+        parameters = await fill_command(parameters)
+    elif command == "kill" or command == "off":
+        parameters = await kill_command(parameters)
+    elif command == "pause":
+        parameters = await pause_command(parameters)
+    elif command == "pulse":
+        parameters = await pulse_command(parameters)
+    elif command == "wave":
+        parameters = await wave_command(parameters)
     else:
         if (Program.is_interrupted or Program.is_paused) and command == "":
             await aprint(">   Interpreting <empty> command as request to end interrupt.")
@@ -130,11 +134,11 @@ async def color_command(parameters: list[str]):
         color_name = color_constants.unshorten_color(color_name)
 
     if color_name == "custom": 
-        return await custom_color_command(parameters, Program)
+        return await custom_color_command(parameters)
 
     success, color = color_constants.try_get_color(color_name)
     if not success: 
-        await aprint("""ERROR: "%s" is not a valid color!""" % parameters[0])
+        await aprint(f"ERROR: {parameters[0]!r} is not a valid color!")
         return []
 
     has_flash_parameter = len(parameters) > 1 and parameters[1] == "-f"
@@ -182,12 +186,12 @@ async def custom_color_command(parameters: list[str]):
     if Program.is_interrupted or has_flash_parameter:
         Program.flash_color = color
         Program.interrupt.update_color_to(color)
-        await aprint(">   Flash color changed to a custom color: %s" % repr(color))
+        await aprint(f">   Flash color changed to a custom color: {color!r}")
         return parameters[5:]
 
     Program.color = color
     Program.animation.update_color_to(color)
-    await aprint(">   Primary color changed to a custom color: %s" % repr(color))
+    await aprint(f">   Primary color changed to a custom color: {color!r}")
     return parameters[4:]
 
 async def fill_command(parameters: list[str]):
@@ -271,9 +275,9 @@ async def kill_parameter(parameters: list[str]):
             used_params += 1
     
     if used_params > 0:
-        await next_command(["kill", parameters[0]], Program)
+        await next_command(["kill", parameters[0]])
     else:
-        await next_command(["kill"], Program)
+        await next_command(["kill"])
     return parameters[used_params:]
 
 async def next_command(parameters: list[str]):
@@ -308,4 +312,58 @@ async def pause_command(parameters: list[str]):
         await aprint("> Paused for %ims" % int(pause_time_sec * 1000))
 
     Program.is_paused = True
+    return parameters[used_params:]
+
+async def pulse_command(parameters: list[str]):
+    """Generate a pulsing effect, where a color fades in and out cyclically. \n
+    Legal Parameters:
+    `pulse_interval`: The amount of time each pulse takes. Given in milliseconds. A pulse is the time it takes for the animation to go from fully off to fully on to fully off."""
+
+    used_params = 0
+    pulse_interval_sec = 1
+    if len(parameters) > 0:
+        pulse_interval_sec = try_num(parameters[0]) * 0.001
+        if pulse_interval_sec > 0.1:
+            used_params += 1
+        else: 
+            pulse_interval_sec = 1
+
+    pulse_animation = PulseAnimation(Program.color, pulse_interval_sec)
+
+    Program.animation = pulse_animation
+
+    await aprint(">   Pulsing the lights!")
+    await aprint("    Pulse time: %ims" % int(pulse_interval_sec * 1000))
+    return parameters[used_params:]
+
+async def wave_command(parameters: list[str]):
+    """Generate a moving wave effect, as a continuous version of the `alt` command. \n
+    Legal Parameters: 
+    `period`: the time taken for the wave to move 1 wavelength. Given in milliseconds. Default 1000.
+    `wave_length`: The size of one wave. Default 5.0. Can be a decimal. A wave is the distance from one fully unlit LED to another."""
+
+    period_sec = 1.0
+    wave_length = 5.0
+    used_params = 0
+
+    if len(parameters) > 0:
+        period_sec = try_num(parameters[0]) * 0.001
+        if period_sec >= 0.05: 
+            used_params = 1
+        else:
+            period_sec = 1.0
+
+    if used_params == 1 and len(parameters) > 1: 
+        wave_length = int(try_num(parameters[1]))
+        if wave_length > 1: 
+            used_params += 1
+        else:
+            wave_length = 3
+
+    Program.animation = WaveAnimation(Program.color, period_sec, wave_length)
+
+    await aprint(">   We're doing the wave!")
+    await aprint(f"    Alternates every {int(1000 * period_sec)}ms")
+    await aprint(f"    Wavelength: {wave_length}")
+
     return parameters[used_params:]

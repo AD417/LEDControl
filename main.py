@@ -5,7 +5,6 @@ from internals.command_handler import do_my_command
 import internals.Program as Program
 from rpi_ws281x import PixelStrip
 import time
-from types import SimpleNamespace
 
 
 # LED strip configuration:

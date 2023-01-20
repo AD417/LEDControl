@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .Animation import Animation
-from .RGB import RGB
+from .._Animation.Animation import Animation
+from ..RGB import RGB
 import time
 
 class InterruptAnimation(Animation):
