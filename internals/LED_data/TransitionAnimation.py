@@ -14,6 +14,9 @@ class TransitionAnimation(Animation):
         self.current_animation: Animation = current_animation
         self.future_animation: Animation = future_animation
 
+    def update_color_to(self: TransitionAnimation, color: RGB):
+        self.future_animation.update_color_to(color)
+
     def transition_percentage(self: TransitionAnimation) -> float:
         """Determine how far we are through the transition."""
         time_since_start = time.time() - self.start_time

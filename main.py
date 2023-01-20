@@ -1,10 +1,11 @@
+from internals.LED_data import *
 from aio_stdout import ainput
-from rpi_ws281x import PixelStrip
 import asyncio
+from internals.command_handler import do_my_command
+import internals.Program as Program
+from rpi_ws281x import PixelStrip
 import time
 from types import SimpleNamespace
-from internals.command_handler import do_my_command
-from internals.LED_data import *
 
 
 # LED strip configuration:
@@ -22,26 +23,6 @@ ARRAY = RGBArray(LED_COUNT)
 STRIP = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
 STRIP.begin()
 
-# """Handles general switching in   program flow."""
-Program = SimpleNamespace(**{
-    # Whether the program is running.
-    "is_running": True,
-    # The current animation used by the strip
-    "animation": KillAnimation(),
-
-    "color": RGB(255,0,0),
-    "is_interrupted": False,
-    "interrupt": FlashAnimation(),
-
-    "flash_color": RGB(255,255,255),
-    "performing_recursion": False,
-    "recursive_command": "",
-    "performing_next_command": False,
-    "next_command": "",
-    "is_paused": False,
-    "time_to_unpause": 0,
-})
-
 async def on_frame():
     ARRAY.update_strip_using(Program.animation)
     ARRAY.send_output_to(STRIP)
@@ -56,7 +37,7 @@ async def on_interrupt():
         Program.is_interrupted = False
         if Program.performing_next_command:
             Program.performing_next_command = False
-            await do_my_command(Program.next_command, Program)
+            await do_my_command(Program.next_command)
 
 async def get_input(): 
     while Program.is_running:
@@ -69,7 +50,7 @@ async def get_input():
         if full_command == "" and Program.performing_recursion:
             full_command = Program.recursive_command
 
-        await do_my_command(full_command, Program)
+        await do_my_command(full_command)
 
 async def led_loop():
     while Program.is_running: 
