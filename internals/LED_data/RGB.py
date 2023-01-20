@@ -19,9 +19,9 @@ class RGB():
         `other`: The second color. This color will be returned if `percentage` is 1.
         `percentage`: The amount to interpolate between. Must be a decimal between 0 and 1, inclusive."""
         percent = max(min(percent, 1), 0)
-        r = round(self.r * percent + other.r * (1 - percent))
-        g = round(self.g * percent + other.g * (1 - percent))
-        b = round(self.b * percent + other.b * (1 - percent))
+        r = round(other.r * percent + self.r * (1 - percent))
+        g = round(other.g * percent + self.g * (1 - percent))
+        b = round(other.b * percent + self.b * (1 - percent))
         return RGB(r, g, b)
 
     ##### DUNDER METHODS

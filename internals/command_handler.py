@@ -29,14 +29,15 @@ async def do_my_command(full_command: str, Program):
         parameters = await alt_command(parameters, Program)
     elif command == "color":
         parameters = await color_command(parameters, Program)
-    # elif command == "pause":
-    #     parameters = await pause_command(parameters, Program)
+    elif command == "pause":
+        parameters = await pause_command(parameters, Program)
     elif command == "exit":
         Program.is_running = False
     else:
-        if Program.is_interrupted and command == "":
-            await aprint(">   Interpreting null command as request to end interrupt.")
+        if (Program.is_interrupted or Program.is_paused) and command == "":
+            await aprint(">   Interpreting <empty> command as request to end interrupt.")
             Program.is_interrupted = False
+            Program.is_paused = False
         else:
             await aprint("Invalid command: %s" % full_command)
         return
@@ -58,12 +59,12 @@ async def do_my_command(full_command: str, Program):
             break
         elif parameters[0] == "-k": 
             if not Program.is_interrupted:
-                await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
+                await aprint(f"""Error processing command args: "next" parameter cannot be used with {command!r} """)
                 break
             parameters = await kill_parameter(parameters[1:], Program)
         elif parameters[0] == "-n":
             if not Program.is_interrupted:
-                await aprint(f"""Error processing command args: "next" parameter cannot be used with {repr(command)} """)
+                await aprint(f"""Error processing command args: "next" parameter cannot be used with {command!r} """)
                 break
             await next_command(parameters[1:], Program)
             break
@@ -100,7 +101,7 @@ async def alt_command(parameters: list[str], Program):
         else:
             width = 3
 
-    Program.animation = AlternatingAnimation(RGB(255,0,0), interval_sec, width)
+    Program.animation = AlternatingAnimation(Program.color, interval_sec, width)
 
     await aprint(">   Theather Chase time!")
     await aprint(f"    Alternates every {int(1000 * interval_sec)}ms")
@@ -187,17 +188,31 @@ async def custom_color_command(parameters: list[str], Program):
 async def fill_command(parameters: list[str], Program):
     """Fill the lights with a single color.\n
     Legal Parameters:
-    None"""
+    `fill_time`: The amount of time it takes for the lights to fully fade in after the command is executed. Provided in milliseconds. Default 0 (instant)"""
 
-    Program.animation = FillAnimation(color=RGB(255,0,0))
+    used_params = 0
+    fill_time_sec = 0
 
+    if len(parameters) > 0: 
+        fill_time_sec = try_num(parameters[0]) * 0.001
+        if fill_time_sec > 0.05:
+            used_params += 1
+
+    fill_animation = FillAnimation(color=Program.color)
+    if used_params == 1:
+        transition = TransitionAnimation(fill_time_sec, Program.animation, fill_animation)
+        Program.animation = transition
+    else:
+        Program.animation = fill_animation
+
+    await aprint(type(Program.animation))
     await aprint(">   Lights on!")
-    return parameters
+    return parameters[used_params:]
 
 async def flash_command(parameters: list[str], Program):
     """INTERRUPT: Override the current state of the lights and flash a color. This color may be different from the base color used by the rest of the program.\n
     Legal Parameters:
-    `flash_time_ms`: The amount of time that the program spends in this flash state, in milliseconds. Default 1000ms. Must be greater than 0."""
+    `flash_time`: The amount of time that the program spends in this flash state, in milliseconds. Default 1000ms. Must be greater than 0."""
 
     flash_time_sec = 1
     used_params = 0
@@ -218,19 +233,45 @@ async def flash_command(parameters: list[str], Program):
 async def kill_command(parameters: list[str], Program):
     """Completely disable the lights, setting all pixels to `RGB(0,0,0)` (black).\n
     Legal Parameters:
-    None"""
+    `kill_time`: The amount of time it takes for the lights to fade to black after the command is executed. Provided in milliseconds. Default 0 (instant)."""
 
-    Program.animation = KillAnimation()
+    used_params = 0
+    kill_time_sec = 0
+
+    if len(parameters) > 0: 
+        kill_time_sec = try_num(parameters[0]) * 0.001
+        if kill_time_sec > 0.05:
+            used_params += 1
+
+    kill_animation = KillAnimation()
+    if used_params == 1:
+        # TODO: -k is incompatible with the current setup for flashing. 
+        # To be fair, dramatic flair does not need animations. 
+        transition = TransitionAnimation(kill_time_sec, Program.animation, kill_animation)
+        Program.animation = transition
+    else:
+        Program.animation = kill_animation
 
     await aprint(">   Killing the lights!")
-    return parameters
+    return parameters[used_params:]
 
 async def kill_parameter(parameters: list[str], Program):
     """Set the next command to kill the lights. Useful for dramatic flashes ("gunshots") where the lights need to be killed suddenly.\n
-    Legal Parameters:
-    None"""
-    await next_command(["kill"], Program)
-    return parameters
+    Legal Sub-parameters:
+    `kill_time`: The amount of time it takes for the lights to fade to black after the command is executed. Provided in milliseconds. Default 0 (instant)."""
+    used_params = 0
+    kill_time_sec = 0
+
+    if len(parameters) > 0:
+        kill_time_sec = try_num(parameters[0]) * 0.001
+        if kill_time_sec > 0.05:
+            used_params += 1
+    
+    if used_params > 0:
+        await next_command(["kill", parameters[0]], Program)
+    else:
+        await next_command(["kill"], Program)
+    return parameters[used_params:]
 
 async def next_command(parameters: list[str], Program):
     """Set the command that executes immediately after the pending interrupt. (Interrupts are signified by `INTERRUPT` in the documentation.\n

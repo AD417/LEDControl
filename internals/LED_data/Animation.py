@@ -22,6 +22,12 @@ class Animation(metaclass=ABCMeta):
     def update_color_to(self: Animation, new_color: RGB):
         self.color = new_color
 
+    def is_complete(self: Animation) -> bool:
+        return False
+
+    def next_animation(self: Animation) -> Animation:
+        return self
+
     @abstractmethod
     def pixel_state(self: Animation, pixel_id: int) -> RGB:
         """Determine the current state of the given pixel_id, given the animation type and amount of time since the animation began.
