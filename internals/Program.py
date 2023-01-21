@@ -1,3 +1,4 @@
+"""Program namespace containing typed global variables for use across the program."""
 from __future__ import annotations
 from .LED_data import *
 

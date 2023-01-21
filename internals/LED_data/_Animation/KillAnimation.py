@@ -3,6 +3,7 @@ from .Animation import Animation
 from ..RGB import RGB
 
 class KillAnimation(Animation):
-    kill_color = RGB(0,0,0)
+    """Simple Kill Animation, which sets all the LEDs in the array to their darkest state, `RGB(0,0,0)` / Off. \n
+    Parameters: None"""
     def pixel_state(self: KillAnimation, pixel_id: int) -> RGB:
-        return self.kill_color
+        return self.dark_led

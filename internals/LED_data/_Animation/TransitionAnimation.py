@@ -4,21 +4,28 @@ from ..RGB import RGB
 import time
 
 class TransitionAnimation(Animation):
+    """Temporary, Continuous Animation used to shift between two otherwise incongruent animations in a smooth manner.
+    Parameters: 
+    `transition_time`: The amount of time over which the animation performs its transition, in seconds. Required. 
+    `current_animation`: The animation we are transitioning from; the current animation. At 0% transition percentage, it is fully in control.
+    `future_animation`: The animation we are transitioning to; the next animation. At 100% transition percentage, it is fully in control."""
     continuum: bool = True
     def __init__(self: TransitionAnimation, transition_time_sec: float, 
             current_animation: Animation, future_animation: Animation):
 
-        super().__init__(RGB(0,0,0), 0)
-        self.transition_time_sec = transition_time_sec
-        self.end_time = self.start_time + transition_time_sec
+        super().__init__()
+        self.transition_time_sec: float = transition_time_sec
+        self.end_time: float = self.start_time + transition_time_sec
         self.current_animation: Animation = current_animation
         self.future_animation: Animation = future_animation
 
     def update_color_to(self: TransitionAnimation, color: RGB):
+        # We only need to update the future color!
         self.future_animation.update_color_to(color)
 
     def transition_percentage(self: TransitionAnimation) -> float:
-        """Determine how far we are through the transition."""
+        """Determine how far we are through the transition. 
+        Returns: a decimal value between 0 and 1 inclusive, indicating percentage."""
         time_since_start = time.time() - self.start_time
         return time_since_start / self.transition_time_sec
 

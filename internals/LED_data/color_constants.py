@@ -10,7 +10,7 @@ COLORS = {
     "orange": RGB(255, 63, 0),
     # Actually purple, but color imabalnces cause some interesting behaviour. 
     "pink": RGB(255, 100, 255),
-    "purple": RGB(0x94, 0, 0xD3),
+    "purple": RGB(200, 0, 255),
     "red": RGB(255, 0, 0),
     "white": RGB(255, 255, 255),
     "yellow": RGB(255, 127, 0),
