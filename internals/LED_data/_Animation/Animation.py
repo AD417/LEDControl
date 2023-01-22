@@ -1,24 +1,26 @@
 from __future__ import annotations
-from abc import ABCMeta, abstractmethod
-from ..RGB import RGB
-import time
-from typing import Any
 
-class Animation(metaclass=ABCMeta):
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
+from ..RGB import RGB
+
+class Animation(ABC):
     """Abstract Animation class for the creation of animations for an LED array. \n
     To use, derive this class and override / implement the `Animation.pixel_state(pixel_id)` method."""
     continuum: bool = False
     dark_led: RGB = RGB(0,0,0)
     interrupt: bool = False
-    def __init__(self: Animation, color: RGB = RGB(0,0,0), frame_interval_sec: float = 0):
-        self.color = color
-        self.frame_interval_sec: float = frame_interval_sec
-        self.start_time: float = time.time()
+    def __init__(self: Animation, color: RGB = RGB(0,0,0), frame_interval: timedelta = timedelta()):
+        self.color: RGB = color
+        self.frame_interval: timedelta = frame_interval
+        self.start_time: datetime = datetime.now()
 
     def frame(self: Animation) -> int|float:
-        """Determine the current frame of the animation, based on the time passed since the program began."""
-        if self.frame_interval_sec <= 0: return 0
-        frame = (time.time() - self.start_time) / self.frame_interval_sec
+        """Determine the current frame of the animation, based on the time passed since the program began. \n
+        If continuum is enabled, the value will be a continuous decimal. \n
+        If continuum is disabled, the value will be a integer, rounded down to 0."""
+        if self.frame_interval <= timedelta(): return 0
+        frame: float = (datetime.now() - self.start_time) / self.frame_interval
         if self.continuum: return frame
         return int(frame)
 
@@ -40,9 +42,9 @@ class Animation(metaclass=ABCMeta):
     def pixel_state(self: Animation, pixel_id: int) -> RGB:
         """Determine the current state of the given pixel_id, given the animation type and amount of time since the animation began. \n
         Parameters:
-        `pixel_id`: The pixel_id on the strip that we are modifying."""
+        `pixel_id`: The index of the pixel that we are modifying."""
         pass
 
 
 if __name__ == "__main__":
-    a = Animation(100) # TypeError.
+    a = Animation(100) # Deliberate TypeError.

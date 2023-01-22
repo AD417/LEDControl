@@ -1,5 +1,6 @@
 """Program namespace containing typed global variables for use across the program."""
 from __future__ import annotations
+from datetime import datetime
 from .LED_data import *
 
 # Whether the program is running.
@@ -17,4 +18,4 @@ recursive_command: str = ""
 performing_next_command: bool = False
 next_command: str = ""
 is_paused: bool = False
-time_to_unpause: int = 0
+time_to_unpause: datetime = datetime.now()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from aio_stdout import aprint
 import asyncio 
 from . import Program
@@ -92,16 +93,16 @@ async def alt_command(parameters: list[str]):
     `Width`: The frequency of lit pixels, in terms of the number of LEDs between Lit pixels. Default 3. Value must be at least 2.
     """
 
-    interval_sec = 0.5
+    interval = timedelta(milliseconds=500)
     width = 3
     used_params = 0
 
     if len(parameters) > 0:
-        interval_sec = try_num(parameters[0]) * 0.001
-        if interval_sec >= 0.05: 
+        interval = timedelta(milliseconds = try_num(parameters[0]))
+        if interval >= timedelta(milliseconds=50): 
             used_params = 1
         else:
-            interval_sec = 0.5
+            interval = timedelta(milliseconds=500)
 
     if used_params == 1 and len(parameters) > 1: 
         width = int(try_num(parameters[1]))
@@ -110,10 +111,10 @@ async def alt_command(parameters: list[str]):
         else:
             width = 3
 
-    Program.animation = AlternatingAnimation(Program.color, interval_sec, width)
+    Program.animation = AlternatingAnimation(Program.color, interval, width)
 
     await aprint(">   Theather Chase time!")
-    await aprint(f"    Alternates every {int(1000 * interval_sec)}ms")
+    await aprint(f"    Alternates every {parameters[0]}ms")
     await aprint(f"    1 in {width} LEDs is lit.")
 
     return parameters[used_params:]
@@ -200,16 +201,16 @@ async def fill_command(parameters: list[str]):
     `fill_time`: The amount of time it takes for the lights to fully fade in after the command is executed. Provided in milliseconds. Default 0 (instant)"""
 
     used_params = 0
-    fill_time_sec = 0
+    fill_time = timedelta()
 
     if len(parameters) > 0: 
-        fill_time_sec = try_num(parameters[0]) * 0.001
-        if fill_time_sec > 0.05:
+        fill_time = timedelta(milliseconds = try_num(parameters[0]))
+        if fill_time > timedelta():
             used_params += 1
 
     fill_animation = FillAnimation(color=Program.color)
     if used_params == 1:
-        transition = TransitionAnimation(fill_time_sec, Program.animation, fill_animation)
+        transition = TransitionAnimation(fill_time, Program.animation, fill_animation)
         Program.animation = transition
     else:
         Program.animation = fill_animation
@@ -221,20 +222,20 @@ async def flash_command(parameters: list[str]):
     Legal Parameters:
     `flash_time`: The amount of time that the program spends in this flash state, in milliseconds. Default 1000ms. Must be greater than 0."""
 
-    flash_time_sec = 1
+    flash_time = timedelta(seconds=1)
     used_params = 0
 
     if len(parameters) > 0:
-        flash_time_sec = try_num(parameters[0]) * 0.001
-        if flash_time_sec > 0:
+        flash_time = timedelta(milliseconds = try_num(parameters[0]))
+        if flash_time > timedelta():
             used_params += 1
         else: 
-            flash_time_sec = 1
+            flash_time = 1
 
-    Program.interrupt = FlashAnimation(Program.flash_color, flash_time_sec)
+    Program.interrupt = FlashAnimation(Program.flash_color, flash_time)
     Program.is_interrupted = True
     await aprint(">   Flashing!")
-    await aprint("    For: %ims" % int(flash_time_sec * 1000))
+    await aprint("    For: %sms" % int(flash_time.total_seconds() * 1000))
     return parameters[used_params:]
 
 async def kill_command(parameters: list[str]):
@@ -243,18 +244,18 @@ async def kill_command(parameters: list[str]):
     `kill_time`: The amount of time it takes for the lights to fade to black after the command is executed. Provided in milliseconds. Default 0 (instant)."""
 
     used_params = 0
-    kill_time_sec = 0
+    kill_time = timedelta()
 
     if len(parameters) > 0: 
-        kill_time_sec = try_num(parameters[0]) * 0.001
-        if kill_time_sec > 0.05:
+        kill_time = timedelta(milliseconds = try_num(parameters[0]))
+        if kill_time > 0.05:
             used_params += 1
 
     kill_animation = KillAnimation()
     if used_params == 1:
         # TODO: -k is incompatible with the current setup for flashing. 
         # To be fair, dramatic flair does not need animations. 
-        transition = TransitionAnimation(kill_time_sec, Program.animation, kill_animation)
+        transition = TransitionAnimation(kill_time, Program.animation, kill_animation)
         Program.animation = transition
     else:
         Program.animation = kill_animation
@@ -267,11 +268,11 @@ async def kill_parameter(parameters: list[str]):
     Legal Sub-parameters:
     `kill_time`: The amount of time it takes for the lights to fade to black after the command is executed. Provided in milliseconds. Default 0 (instant)."""
     used_params = 0
-    kill_time_sec = 0
+    kill_time = timedelta()
 
     if len(parameters) > 0:
-        kill_time_sec = try_num(parameters[0]) * 0.001
-        if kill_time_sec > 0.05:
+        kill_time = timedelta(milliseconds = try_num(parameters[0]))
+        if kill_time > timedelta(milliseconds=50):
             used_params += 1
     
     if used_params > 0:
@@ -296,20 +297,20 @@ async def pause_command(parameters: list[str]):
     `pause_time_ms`: The amount of time to pause, in milliseconds. Default Infinity. Must be at least 50ms.\n
     Note: entering any command (or pressing the enter key) while the program is paused will immediately unpause. This is intended to aid in timing events with highly variable run time.\n
     Note: This comamnd will not have any follow-up parameters. Any subsequent parameters will be ignored."""
-    pause_time_sec = 0
+    pause_time = timedelta(milliseconds=0)
     used_params = 0
 
     if len(parameters) > 0:
-        pause_time_sec = try_num(parameters[0]) * 0.001
-        if pause_time_sec > 0:
+        pause_time = timedelta(milliseconds = try_num(parameters[0]))
+        if pause_time > timedelta(milliseconds=0):
             used_params += 1
 
-    if pause_time_sec == 0:
-        Program.time_to_unpause = time.time() + 99999999
+    if pause_time <= timedelta(milliseconds=0):
+        Program.time_to_unpause = datetime.max
         await aprint(">   Paused! (Press Enter to resume)")
     else: 
-        Program.time_to_unpause = time.time() + pause_time_sec
-        await aprint("> Paused for %ims" % int(pause_time_sec * 1000))
+        Program.time_to_unpause = datetime.now() + pause_time
+        await aprint("> Paused for %ims" % int(pause_time.total_seconds() * 1000))
 
     Program.is_paused = True
     return parameters[used_params:]
@@ -320,20 +321,20 @@ async def pulse_command(parameters: list[str]):
     `pulse_interval`: The amount of time each pulse takes. Given in milliseconds. A pulse is the time it takes for the animation to go from fully off to fully on to fully off."""
 
     used_params = 0
-    pulse_interval_sec = 1
+    pulse_interval = timedelta(seconds=3)
     if len(parameters) > 0:
-        pulse_interval_sec = try_num(parameters[0]) * 0.001
-        if pulse_interval_sec > 0.1:
+        pulse_interval = timedelta(milliseconds = try_num(parameters[0]))
+        if pulse_interval > timedelta(milliseconds=100):
             used_params += 1
         else: 
-            pulse_interval_sec = 1
+            pulse_interval = timedelta(seconds=1)
 
-    pulse_animation = PulseAnimation(Program.color, pulse_interval_sec)
+    pulse_animation = PulseAnimation(Program.color, pulse_interval)
 
     Program.animation = pulse_animation
 
     await aprint(">   Pulsing the lights!")
-    await aprint("    Pulse time: %ims" % int(pulse_interval_sec * 1000))
+    await aprint("    Pulse time: %ims" % int(pulse_interval.total_seconds() * 1000))
     return parameters[used_params:]
 
 async def wave_command(parameters: list[str]):
@@ -342,16 +343,16 @@ async def wave_command(parameters: list[str]):
     `period`: the time taken for the wave to move 1 wavelength. Given in milliseconds. Default 1000.
     `wave_length`: The size of one wave. Default 5.0. Can be a decimal. A wave is the distance from one fully unlit LED to another."""
 
-    period_sec = 1.0
+    period = timedelta(seconds=1)
     wave_length = 5.0
     used_params = 0
 
     if len(parameters) > 0:
-        period_sec = try_num(parameters[0]) * 0.001
-        if period_sec >= 0.05: 
+        period = timedelta(milliseconds = try_num(parameters[0]))
+        if period_sec >= timedelta(milliseconds=50): 
             used_params = 1
         else:
-            period_sec = 1.0
+            period_sec = timedelta(seconds=1)
 
     if used_params == 1 and len(parameters) > 1: 
         wave_length = int(try_num(parameters[1]))
@@ -363,7 +364,7 @@ async def wave_command(parameters: list[str]):
     Program.animation = WaveAnimation(Program.color, period_sec, wave_length)
 
     await aprint(">   We're doing the wave!")
-    await aprint(f"    Alternates every {int(1000 * period_sec)}ms")
+    await aprint(f"    Alternates every {int(1000 * period_sec.total_seconds())}ms")
     await aprint(f"    Wavelength: {wave_length}")
 
     return parameters[used_params:]

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from .Animation import Animation
 from ..RGB import RGB
 
