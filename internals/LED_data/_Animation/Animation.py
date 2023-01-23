@@ -3,17 +3,22 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from ..RGB import RGB
+from typing import ClassVar
+from dataclasses import dataclass, field
 
+@dataclass
 class Animation(ABC):
     """Abstract Animation class for the creation of animations for an LED array. \n
     To use, derive this class and override / implement the `Animation.pixel_state(pixel_id)` method."""
-    continuum: bool = False
-    dark_led: RGB = RGB(0,0,0)
-    interrupt: bool = False
-    def __init__(self: Animation, color: RGB = RGB(0,0,0), frame_interval: timedelta = timedelta()):
-        self.color: RGB = color
-        self.frame_interval: timedelta = frame_interval
-        self.start_time: datetime = datetime.now()
+    continuum: ClassVar[bool] = False
+    dark_led: ClassVar[RGB] = RGB(0,0,0)
+    interrupt: ClassVar[bool] = False
+
+    color: RGB = field(default=RGB(0,0,0))
+    frame_interval: timedelta = field(default=timedelta())
+    start_time: datetime = field(default_factory=datetime.now, init=False, repr=False)
+
+    from dataclasses import replace as copy
 
     def frame(self: Animation) -> int|float:
         """Determine the current frame of the animation, based on the time passed since the program began. \n

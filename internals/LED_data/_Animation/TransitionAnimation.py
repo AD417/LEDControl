@@ -2,7 +2,6 @@ from __future__ import annotations
 from .Animation import Animation
 from ..RGB import RGB
 from datetime import datetime, timedelta
-import time
 
 class TransitionAnimation(Animation):
     """Temporary, Continuous Animation used to shift between two otherwise incongruent animations in a smooth manner.
@@ -28,10 +27,10 @@ class TransitionAnimation(Animation):
         """Determine how far we are through the transition. 
         Returns: a decimal value between 0 and 1 inclusive, indicating percentage."""
         time_since_start: timedelta = datetime.now() - self.start_time
-        return time_since_start / self.transition_time_sec
+        return time_since_start / self.transition_time
 
     def is_complete(self: TransitionAnimation) -> bool:
-        return time.time() > self.end_time
+        return datetime.now() > self.end_time
 
     def next_animation(self: TransitionAnimation) -> Animation:
         return self.future_animation

@@ -1,9 +1,13 @@
 from __future__ import annotations
+
+from dataclasses import dataclass, field
 from .Animation import Animation
 from datetime import timedelta
 from ..RGB import RGB
 import random
+from dataclasses import dataclass, field
 
+@dataclass
 class TrafficAnimation(Animation):
     """Traffic Animation, based on concepts for "In the Heights" effects. 
     Creates 2 arrays of booleans that move in opposite directions, cooresponding to car headlights on a distant road. `True` boolean values coorespond to car headlights. They move by 1 unit per frame along their path, until they reach the end and get removed. \n
@@ -11,20 +15,18 @@ class TrafficAnimation(Animation):
     `frame_interval`: the time between frames, in seconds. Default `0.3s` / `300ms`.
     `road_size`: The length of the road / maximum LED id for the animation, for space reasons. Default `100`.
     `traffic_density`: The percentage of road spaces occupied by "cars". Default `0.1` / `10%`. Range from 0 to 1, inclusive. High percentages (above 50%) may ruin the effect."""
-    def __init__(self: TrafficAnimation, color: RGB, frame_interval: timedelta = timedelta(milliseconds=300), 
-            road_size: int = 100, traffic_density: float = 0.1):
-        
-        super().__init__(color, frame_interval)
-        self.traffic_density: float = traffic_density
-        self.road_size: int = road_size
-        #  Left to right.
-        self.eastbound: list[bool] = [False] * road_size
-        # Right to left.
-        self.westbound: list[bool] = [False] * road_size
-        for i in range(road_size):
-            self.eastbound[i] = self.new_car()
-            self.westbound[i] = self.new_car()
-        self.last_updated_frame: int = 0
+
+    frame_interval: timedelta = timedelta(milliseconds=300)
+    road_size: int = 100
+    traffic_density: float = 0.1
+    eastbound: list[bool] = field(default_factory=list, init=False, repr=False)
+    westbound: list[bool] = field(default_factory=list, init=False, repr=False)
+    last_updated_frame: int = field(default=0, init=False)
+
+    def __post_init__(self):
+        for _ in range(self.road_size):
+            self.eastbound.append(self.new_car())
+            self.westbound.append(self.new_car())
 
     def new_car(self: TrafficAnimation) -> bool:
         """Use the traffic density to determine if a new car should be spawned at the beginning of a road.

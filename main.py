@@ -1,10 +1,10 @@
 from internals.LED_data import *
 from aio_stdout import ainput
 import asyncio
+from datetime import datetime
 from internals.command_handler import do_my_command
 import internals.Program as Program
 from rpi_ws281x import PixelStrip
-import time
 
 
 # LED strip configuration:
@@ -57,7 +57,7 @@ async def led_loop():
         # Python cannot parallel process, unfortunately. 
         await asyncio.sleep(0.001)
         if Program.is_paused: 
-            if time.time() > Program.time_to_unpause:
+            if datetime.now() > Program.time_to_unpause:
                 Program.is_paused = False
             else:
                 continue

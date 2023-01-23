@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from aio_stdout import aprint
 import asyncio 
 from . import Program
-import time
 from .LED_data import *
 
 async def do_my_command(full_command: str):
@@ -36,6 +35,8 @@ async def do_my_command(full_command: str):
         parameters = await pause_command(parameters)
     elif command == "pulse":
         parameters = await pulse_command(parameters)
+    elif command == "traffic":
+        parameters = await traffic_command(parameters)
     elif command == "wave":
         parameters = await wave_command(parameters)
     else:
@@ -114,7 +115,7 @@ async def alt_command(parameters: list[str]):
     Program.animation = AlternatingAnimation(Program.color, interval, width)
 
     await aprint(">   Theather Chase time!")
-    await aprint(f"    Alternates every {parameters[0]}ms")
+    await aprint(f"    Alternates every {int(interval.total_seconds() * 1000)}ms")
     await aprint(f"    1 in {width} LEDs is lit.")
 
     return parameters[used_params:]
@@ -220,9 +221,9 @@ async def fill_command(parameters: list[str]):
 async def flash_command(parameters: list[str]):
     """INTERRUPT: Override the current state of the lights and flash a color. This color may be different from the base color used by the rest of the program.\n
     Legal Parameters:
-    `flash_time`: The amount of time that the program spends in this flash state, in milliseconds. Default 1000ms. Must be greater than 0."""
+    `flash_time`: The amount of time that the program spends in this flash state, in milliseconds. Default 500ms. Must be greater than 0."""
 
-    flash_time = timedelta(seconds=1)
+    flash_time = timedelta(milliseconds=500)
     used_params = 0
 
     if len(parameters) > 0:
@@ -248,7 +249,7 @@ async def kill_command(parameters: list[str]):
 
     if len(parameters) > 0: 
         kill_time = timedelta(milliseconds = try_num(parameters[0]))
-        if kill_time > 0.05:
+        if kill_time > timedelta(milliseconds=50):
             used_params += 1
 
     kill_animation = KillAnimation()
@@ -337,22 +338,56 @@ async def pulse_command(parameters: list[str]):
     await aprint("    Pulse time: %ims" % int(pulse_interval.total_seconds() * 1000))
     return parameters[used_params:]
 
+async def traffic_command(parameters: list[str]):
+    """Generate a animation that simulates headlights on a distant road. \n
+    Legal Parameters:
+    `frame_interval`: the interval between frames. Given in milliseconds. Default 300ms. Must be at at least 100ms. An interval is the time taken for the lights to move one pixel.
+    `traffic_density`: how much traffic is on the road. Given as a percentage from 0-100%. Default 10%. Values above 50% may ruin the effect."""
+
+    used_params = 0
+    frame_interval = timedelta(milliseconds=300)
+    density = 0.1
+
+    if len(parameters) > 0:
+        frame_interval = timedelta(milliseconds = try_num(parameters[0]))
+        if frame_interval > timedelta(milliseconds=100):
+            used_params += 1
+        else:
+            frame_interval = timedelta(milliseconds=300)
+    
+    if used_params == 1 and len(parameters) > 1:
+        density = try_num(parameters[1]) / 100
+        if 0 < density < 1: 
+            used_params += 1
+        else:
+            density = 0.1
+
+    traffic_animation = TrafficAnimation(Program.color, frame_interval, 100, density)
+
+    Program.animation = traffic_animation
+
+    await aprint(f">   Time for traffic!")
+    await aprint(f"    Cars move at 1 pixel per {int(frame_interval.total_seconds() * 1000)}ms")
+    await aprint(f"    About {density * 100}% of the road is used.")
+
+    return parameters[used_params:]
+
 async def wave_command(parameters: list[str]):
     """Generate a moving wave effect, as a continuous version of the `alt` command. \n
     Legal Parameters: 
     `period`: the time taken for the wave to move 1 wavelength. Given in milliseconds. Default 1000.
     `wave_length`: The size of one wave. Default 5.0. Can be a decimal. A wave is the distance from one fully unlit LED to another."""
 
-    period = timedelta(seconds=1)
+    period = timedelta(seconds=3)
     wave_length = 5.0
     used_params = 0
 
     if len(parameters) > 0:
         period = timedelta(milliseconds = try_num(parameters[0]))
-        if period_sec >= timedelta(milliseconds=50): 
+        if period >= timedelta(milliseconds=50): 
             used_params = 1
         else:
-            period_sec = timedelta(seconds=1)
+            period = timedelta(seconds=1)
 
     if used_params == 1 and len(parameters) > 1: 
         wave_length = int(try_num(parameters[1]))
@@ -361,10 +396,10 @@ async def wave_command(parameters: list[str]):
         else:
             wave_length = 3
 
-    Program.animation = WaveAnimation(Program.color, period_sec, wave_length)
+    Program.animation = WaveAnimation(Program.color, period, wave_length)
 
     await aprint(">   We're doing the wave!")
-    await aprint(f"    Alternates every {int(1000 * period_sec.total_seconds())}ms")
+    await aprint(f"    Alternates every {int(1000 * period.total_seconds())}ms")
     await aprint(f"    Wavelength: {wave_length}")
 
     return parameters[used_params:]

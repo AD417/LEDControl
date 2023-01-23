@@ -8,6 +8,7 @@ from ._Animation.KillAnimation import KillAnimation
 from ._Animation.PulseAnimation import PulseAnimation
 from .RGB import RGB
 from .RGBArray import RGBArray
+from ._Animation.TrafficAnimation import TrafficAnimation
 from ._Animation.TransitionAnimation import TransitionAnimation
 from ._Animation.WaveAnimation import WaveAnimation
 
@@ -22,6 +23,7 @@ __all__ = [
     "PulseAnimation",
     "RGB",
     "RGBArray",
+    "TrafficAnimation",
     "TransitionAnimation",
     "WaveAnimation"
 ]

@@ -2,7 +2,6 @@ from __future__ import annotations
 from ._Animation.Animation import Animation
 from .RGB import RGB
 from rpi_ws281x import PixelStrip
-import time
 
 class RGBArray():
     def __init__(self: RGBArray, array_length: int):
@@ -32,6 +31,7 @@ class RGBArray():
         return f"RGBArray({self.size}"
 
 if __name__ == "__main__":
+    import time
     # LED strip configuration:
     LED_COUNT = 20        # Number of LED pixels.
     LED_PIN = 18          # GPIO pin connected to the pixels (18 uses PWM!).
