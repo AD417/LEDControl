@@ -19,3 +19,6 @@ performing_next_command: bool = False
 next_command: str = ""
 is_paused: bool = False
 time_to_unpause: datetime = datetime.now()
+
+next_animation: Animation|None = None
+modifying_flash: bool = False

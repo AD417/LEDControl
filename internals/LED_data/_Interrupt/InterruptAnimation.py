@@ -8,7 +8,7 @@ class InterruptAnimation(Animation):
     """Abstract Interrupting Animation class for animations that interrupt normal program flow to display something to the LED array."""
     interrupt = True
     overwrite = True
-    def __init__(self: Animation, color: RGB = ..., timeout: timedelta = timedelta(0.5)):
+    def __init__(self: Animation, color: RGB = RGB(0,0,0), timeout: timedelta = timedelta(0.5)):
         super().__init__(color)
         self.timeout_sec: timedelta = timeout
         self.end_time: datetime = self.start_time + timeout

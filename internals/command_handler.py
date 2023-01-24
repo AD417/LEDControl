@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from aio_stdout import aprint
+from aio_stdout import aprint, flush
 import asyncio 
 from . import Program
+from .commands import *
 from .LED_data import *
 
 async def do_my_command(full_command: str):
@@ -16,28 +17,32 @@ async def do_my_command(full_command: str):
     `color`: Set the color of the lights.\n
     `pause`: INTERRUPT: pause the lights for an interval.\n
     `exit`: Immediately shut down and exit the application."""
+
+    Program.modifying_flash = False
+    Program.next_animation = None
+
     parameters = full_command.split(" ")
     command = parameters.pop(0)
 
-    if command == "alt": 
+    if command in ALTERNATING: 
         parameters = await alt_command(parameters)
-    elif command == "color":
+    elif command in COLOR:
         parameters = await color_command(parameters)
-    elif command == "exit":
-        Program.is_running = False
-    elif command == "flash":
+    elif command in EXIT:
+        parameters = await exit_command(parameters)
+    elif command in FLASH:
         parameters = await flash_command(parameters)
-    elif command == "fill" or command == "on":
+    elif command in FILL:
         parameters = await fill_command(parameters)
-    elif command == "kill" or command == "off":
+    elif command in KILL:
         parameters = await kill_command(parameters)
-    elif command == "pause":
+    elif command in PAUSE:
         parameters = await pause_command(parameters)
-    elif command == "pulse":
+    elif command in PULSE:
         parameters = await pulse_command(parameters)
-    elif command == "traffic":
+    elif command in TRAFFIC:
         parameters = await traffic_command(parameters)
-    elif command == "wave":
+    elif command in WAVE:
         parameters = await wave_command(parameters)
     else:
         if (Program.is_interrupted or Program.is_paused) and command == "":
@@ -51,10 +56,10 @@ async def do_my_command(full_command: str):
     Program.next_command = ""
     while len(parameters) > 0:
         # Color command.
-        if parameters[0] == "-c":
+        if parameters[0] == COLOR_PARAMETER:
             parameters = await color_command(parameters[1:])
         # Recursion parameter. 
-        elif parameters[0] == "-e":
+        elif parameters[0] == RECURSION_PARAMETER:
             Program.recursive_command = full_command
             if Program.performing_recursion:
                 await aprint("    Recursion continues. Type anything to break.")
@@ -63,22 +68,33 @@ async def do_my_command(full_command: str):
             Program.performing_recursion = True
             # Most parameters are, by design, only ever the last parameter.
             break
-        elif parameters[0] == "-k": 
+        elif parameters[0] == KILL_PARAMETER: 
             if not Program.is_interrupted:
-                await aprint(f"""Error processing command args: "next" parameter cannot be used with {command!r} """)
+                await aprint(f"Error processing command args: 'next' parameter cannot be used with {command!r} command")
                 break
             parameters = await kill_parameter(parameters[1:])
-        elif parameters[0] == "-n":
+        elif parameters[0] == FUTURE_PARAMETER:
             if not Program.is_interrupted:
-                await aprint(f"""Error processing command args: "next" parameter cannot be used with {command!r} """)
+                await aprint(f"Error processing command args: 'next' parameter cannot be used with {command!r} command")
                 break
             await next_command(parameters[1:])
             break
-        elif parameters[0] == "-p":
+        elif parameters[0] == PAUSE_PARAMETER:
             parameters = await pause_command(parameters[1:])
+        elif parameters[0] == TRANSITION_PARAMETER:
+            if Program.modifying_flash:
+                await aprint(f"Error Processing command args: 'transition' parameter cannot be used with {command!r} command")
+                break
+            parameters = await transition_parameter(parameters[1:])
         else: 
             await aprint("Error processing command args: '%s' is not a valid parameter." % parameters[0])
             break
+
+    if Program.next_animation is not None:
+        if Program.modifying_flash:
+            Program.interrupt = Program.next_animation
+        else:
+            Program.animation = Program.next_animation
 
 def try_num(value: str) -> int:
     try: 
@@ -112,7 +128,7 @@ async def alt_command(parameters: list[str]):
         else:
             width = 3
 
-    Program.animation = AlternatingAnimation(Program.color, interval, width)
+    Program.next_animation = AlternatingAnimation(Program.color, interval, width)
 
     await aprint(">   Theather Chase time!")
     await aprint(f"    Alternates every {int(interval.total_seconds() * 1000)}ms")
@@ -146,18 +162,21 @@ async def color_command(parameters: list[str]):
     has_flash_parameter = len(parameters) > 1 and parameters[1] == "-f"
 
     if Program.is_interrupted or has_flash_parameter: 
+        Program.modifying_flash = True
         Program.flash_color = color
-        Program.interrupt.update_color_to(color)
+        Program.next_animation = Program.interrupt.copy(color=color)
         await aprint(">   Flash color has been changed to: " + color_name)
         if Program.is_interrupted and not has_flash_parameter: 
             return parameters[1:]
         return parameters[2:]
 
-    else: 
-        Program.color = color
-        Program.animation.update_color_to(color)
-        await aprint(">   Primary color has been changed to: " + color_name)
-        return parameters[1:]
+    Program.color = color
+    if Program.next_animation is None:
+        Program.next_animation = Program.animation.copy(color=color)
+    else:
+        Program.next_animation.update_color_to(color)
+    await aprint(">   Primary color has been changed to: " + color_name)
+    return parameters[1:]
 
 async def custom_color_command(parameters: list[str]):
     """
@@ -186,15 +205,25 @@ async def custom_color_command(parameters: list[str]):
     has_flash_parameter = len(parameters) > 4 and parameters[4] == "-f"
 
     if Program.is_interrupted or has_flash_parameter:
+        Program.modifying_flash = True
         Program.flash_color = color
-        Program.interrupt.update_color_to(color)
+        Program.next_animation = Program.interrupt.copy(color=color)
         await aprint(f">   Flash color changed to a custom color: {color!r}")
+        if Program.is_interrupted and not has_flash_parameter:
+            return parameters[4:]
         return parameters[5:]
 
     Program.color = color
-    Program.animation.update_color_to(color)
+    Program.next_animation = Program.animation.copy(color=color)
     await aprint(f">   Primary color changed to a custom color: {color!r}")
     return parameters[4:]
+
+async def exit_command(parameters: list[str]):
+    Program.is_running = False
+    async with flush:
+        pass
+    await aprint("Exiting now. Thank you for using LEDControl.")
+    return []
 
 async def fill_command(parameters: list[str]):
     """Fill the lights with a single color.\n
@@ -209,12 +238,9 @@ async def fill_command(parameters: list[str]):
         if fill_time > timedelta():
             used_params += 1
 
-    fill_animation = FillAnimation(color=Program.color)
+    Program.next_animation = FillAnimation(color=Program.color)
     if used_params == 1:
-        transition = TransitionAnimation(fill_time, Program.animation, fill_animation)
-        Program.animation = transition
-    else:
-        Program.animation = fill_animation
+        Program.next_animation = TransitionAnimation(fill_time, Program.animation, Program.next_animation)
     await aprint(">   Lights on!")
     return parameters[used_params:]
 
@@ -233,7 +259,8 @@ async def flash_command(parameters: list[str]):
         else: 
             flash_time = 1
 
-    Program.interrupt = FlashAnimation(Program.flash_color, flash_time)
+    Program.next_animation = FlashAnimation(Program.flash_color, flash_time)
+    Program.modifying_flash = True
     Program.is_interrupted = True
     await aprint(">   Flashing!")
     await aprint("    For: %sms" % int(flash_time.total_seconds() * 1000))
@@ -255,11 +282,10 @@ async def kill_command(parameters: list[str]):
     kill_animation = KillAnimation()
     if used_params == 1:
         # TODO: -k is incompatible with the current setup for flashing. 
-        # To be fair, dramatic flair does not need animations. 
-        transition = TransitionAnimation(kill_time, Program.animation, kill_animation)
-        Program.animation = transition
+        # To be fair, dramatic flair does not require animations. 
+        Program.next_animation = TransitionAnimation(kill_time, Program.animation, kill_animation)
     else:
-        Program.animation = kill_animation
+        Program.next_animation = kill_animation
 
     await aprint(">   Killing the lights!")
     return parameters[used_params:]
@@ -285,7 +311,7 @@ async def kill_parameter(parameters: list[str]):
 async def next_command(parameters: list[str]):
     """Set the command that executes immediately after the pending interrupt. (Interrupts are signified by `INTERRUPT` in the documentation.\n
     Legal Parameters:
-    `command`: The command to be executed. This consists of the rest of the parameters in the command.\n
+    `command`: The command to be executed. Required. This consists of the rest of the parameters in the command.\n
     Note: This command will not have any follow-up parameters."""
     Program.next_command = " ".join(parameters)
     Program.performing_next_command = True
@@ -332,7 +358,7 @@ async def pulse_command(parameters: list[str]):
 
     pulse_animation = PulseAnimation(Program.color, pulse_interval)
 
-    Program.animation = pulse_animation
+    Program.next_animation = pulse_animation
 
     await aprint(">   Pulsing the lights!")
     await aprint("    Pulse time: %ims" % int(pulse_interval.total_seconds() * 1000))
@@ -364,13 +390,36 @@ async def traffic_command(parameters: list[str]):
 
     traffic_animation = TrafficAnimation(Program.color, frame_interval, 100, density)
 
-    Program.animation = traffic_animation
+    Program.next_animation = traffic_animation
 
     await aprint(f">   Time for traffic!")
     await aprint(f"    Cars move at 1 pixel per {int(frame_interval.total_seconds() * 1000)}ms")
     await aprint(f"    About {density * 100}% of the road is used.")
 
     return parameters[used_params:]
+
+async def transition_parameter(parameters: list[str]):
+    """Set the amount of time we spend transitioning from the current animation state to the future one defined by the preceeding command.
+    Legal Sub-parameters:
+    `time`: The amount of time the program spends transitioning. Required. Provided in milliseconds. Must be greater than 50ms."""
+    if len(parameters) == 0:
+        await aprint("Error processing command args: '-t' parameter requires a time interval in milliseconds.")
+        return []
+    if issubclass(type(Program.next_animation), TransitionAnimation):
+        await aprint("Error processing command args: cannot transition from a transition!")
+        return parameters[1:]
+    
+    transition_time = timedelta(milliseconds=try_num(parameters[0]))
+    if transition_time < timedelta(milliseconds=50):
+        if transition_time == timedelta():
+            await aprint("Error processing command args: value was either 0 or not a number!")
+        else:
+            await aprint("Warning: transition time provided was less than 50 *milli*seconds. Did you input seconds?")
+        return parameters[1:]
+
+    Program.next_animation = TransitionAnimation(transition_time, Program.animation, Program.next_animation)
+
+    return parameters[1:]
 
 async def wave_command(parameters: list[str]):
     """Generate a moving wave effect, as a continuous version of the `alt` command. \n
@@ -396,7 +445,7 @@ async def wave_command(parameters: list[str]):
         else:
             wave_length = 3
 
-    Program.animation = WaveAnimation(Program.color, period, wave_length)
+    Program.next_animation = WaveAnimation(Program.color, period, wave_length)
 
     await aprint(">   We're doing the wave!")
     await aprint(f"    Alternates every {int(1000 * period.total_seconds())}ms")
