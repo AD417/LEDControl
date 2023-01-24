@@ -15,8 +15,8 @@ class Animation(ABC):
     interrupt: ClassVar[bool] = False
 
     color: RGB = field(default=RGB(0,0,0))
-    frame_interval: timedelta = field(default=timedelta())
-    start_time: datetime = field(default_factory=datetime.now, init=False, repr=False)
+    frame_interval: timedelta = field(default=timedelta(seconds=1))
+    start_time: datetime = field(default_factory=datetime.now)
 
     from dataclasses import replace as copy
 

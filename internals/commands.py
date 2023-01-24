@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 ALTERNATING:    Final[list[str]] = ["alt"]
 COLOR:          Final[list[str]] = ["color"]
+ECHO:           Final[list[str]] = ["echo", "#", "//"]
 EXIT:           Final[list[str]] = ["exit", "leave", "shutdown", "stop"]
 FLASH:          Final[list[str]] = ["flash", "blink"]
 FILL:           Final[list[str]] = ["fill", "on"]
@@ -15,6 +16,7 @@ TRAFFIC:        Final[list[str]] = ["cars", "traffic"]
 WAVE:           Final[list[str]] = ["wave"]
 
 COLOR_PARAMETER:        Final[str] = "-c"
+ECHO_PARAMETER:         Final[str] = "#"
 RECURSION_PARAMETER:    Final[str] = "-e"
 KILL_PARAMETER:         Final[str] = "-k"
 FUTURE_PARAMETER:       Final[str] = "-n"

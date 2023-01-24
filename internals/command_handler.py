@@ -7,6 +7,8 @@ from . import Program
 from .commands import *
 from .LED_data import *
 
+will_interrupt: bool = False
+
 async def do_my_command(full_command: str):
     """Execute a command providded by the user.\n
     Valid commands / basic info: \n
@@ -18,7 +20,10 @@ async def do_my_command(full_command: str):
     `pause`: INTERRUPT: pause the lights for an interval.\n
     `exit`: Immediately shut down and exit the application."""
 
+    global will_interrupt
+
     Program.modifying_flash = False
+    will_interrupt = False
     Program.next_animation = None
 
     parameters = full_command.split(" ")
@@ -28,6 +33,8 @@ async def do_my_command(full_command: str):
         parameters = await alt_command(parameters)
     elif command in COLOR:
         parameters = await color_command(parameters)
+    elif command in ECHO:
+        parameters = await echo_command(parameters)
     elif command in EXIT:
         parameters = await exit_command(parameters)
     elif command in FLASH:
@@ -49,6 +56,8 @@ async def do_my_command(full_command: str):
             await aprint(">   Interpreting <empty> command as request to end interrupt.")
             Program.is_interrupted = False
             Program.is_paused = False
+            if Program.performing_next_command:
+                await do_my_command(Program.next_command)
         else:
             await aprint("Invalid command: %s" % full_command)
         return
@@ -69,12 +78,12 @@ async def do_my_command(full_command: str):
             # Most parameters are, by design, only ever the last parameter.
             break
         elif parameters[0] == KILL_PARAMETER: 
-            if not Program.is_interrupted:
+            if not will_interrupt:
                 await aprint(f"Error processing command args: 'next' parameter cannot be used with {command!r} command")
                 break
             parameters = await kill_parameter(parameters[1:])
         elif parameters[0] == FUTURE_PARAMETER:
-            if not Program.is_interrupted:
+            if not (will_interrupt or Program.is_paused):
                 await aprint(f"Error processing command args: 'next' parameter cannot be used with {command!r} command")
                 break
             await next_command(parameters[1:])
@@ -89,12 +98,15 @@ async def do_my_command(full_command: str):
         else: 
             await aprint("Error processing command args: '%s' is not a valid parameter." % parameters[0])
             break
+    
 
     if Program.next_animation is not None:
         if Program.modifying_flash:
             Program.interrupt = Program.next_animation
         else:
             Program.animation = Program.next_animation
+
+    if will_interrupt: Program.is_interrupted = True
 
 def try_num(value: str) -> int:
     try: 
@@ -128,7 +140,11 @@ async def alt_command(parameters: list[str]):
         else:
             width = 3
 
-    Program.next_animation = AlternatingAnimation(Program.color, interval, width)
+    Program.next_animation = AlternatingAnimation(
+        color = Program.color, 
+        frame_interval = interval, 
+        width=width
+    )
 
     await aprint(">   Theather Chase time!")
     await aprint(f"    Alternates every {int(interval.total_seconds() * 1000)}ms")
@@ -141,13 +157,14 @@ async def color_command(parameters: list[str]):
     Set the color used by the animation. \n
     Legal parameters:
     `color`: The name of the color being used. Required. Value can be a single letter.
-    Note: if the keyword "custom" or "c" is supplied, a valid RGB value must also be supplied. See :func:`custom_color_command` for more information."""
+    `[-f]`: If we should update the flash or not. 
+    Note: if the keyword "custom" or "c" is supplied, a valid RGB value must also be supplied. See :func:`custom_color_command` for more information.
+    Warning: Do not use `-f` with the color parameter or any other effects."""
     if len(parameters) == 0: 
         await aprint(">   ERROR: Color command must supply a parameter!")
         return parameters
 
     color_name = parameters[0]
-    print(len(color_name))
     if len(color_name) == 1: 
         color_name = color_constants.unshorten_color(color_name)
 
@@ -161,12 +178,15 @@ async def color_command(parameters: list[str]):
 
     has_flash_parameter = len(parameters) > 1 and parameters[1] == "-f"
 
-    if Program.is_interrupted or has_flash_parameter: 
+    if will_interrupt or has_flash_parameter: 
         Program.modifying_flash = True
         Program.flash_color = color
-        Program.next_animation = Program.interrupt.copy(color=color)
+        if Program.next_animation is not None:
+            Program.next_animation.update_color_to(color)
+        else:
+            Program.next_animation = Program.interrupt.copy(color=color)
         await aprint(">   Flash color has been changed to: " + color_name)
-        if Program.is_interrupted and not has_flash_parameter: 
+        if will_interrupt and not has_flash_parameter: 
             return parameters[1:]
         return parameters[2:]
 
@@ -204,12 +224,15 @@ async def custom_color_command(parameters: list[str]):
 
     has_flash_parameter = len(parameters) > 4 and parameters[4] == "-f"
 
-    if Program.is_interrupted or has_flash_parameter:
+    if Program.modifying_flash or has_flash_parameter:
         Program.modifying_flash = True
         Program.flash_color = color
-        Program.next_animation = Program.interrupt.copy(color=color)
+        if Program.next_animation is not None:
+            Program.next_animation = Program.next_animation.copy(color=color)
+        else:
+            Program.next_animation = Program.interrupt.copy(color=color)
         await aprint(f">   Flash color changed to a custom color: {color!r}")
-        if Program.is_interrupted and not has_flash_parameter:
+        if not has_flash_parameter:
             return parameters[4:]
         return parameters[5:]
 
@@ -217,6 +240,12 @@ async def custom_color_command(parameters: list[str]):
     Program.next_animation = Program.animation.copy(color=color)
     await aprint(f">   Primary color changed to a custom color: {color!r}")
     return parameters[4:]
+
+async def echo_command(parameters: list[str]):
+    """Print a statement to the console. Used in automated scripts to instruct the user on specifics involving cues."""
+    output = " ".join(parameters)
+    await aprint(output)
+    return ""
 
 async def exit_command(parameters: list[str]):
     Program.is_running = False
@@ -249,6 +278,8 @@ async def flash_command(parameters: list[str]):
     Legal Parameters:
     `flash_time`: The amount of time that the program spends in this flash state, in milliseconds. Default 500ms. Must be greater than 0."""
 
+    global will_interrupt
+
     flash_time = timedelta(milliseconds=500)
     used_params = 0
 
@@ -261,7 +292,7 @@ async def flash_command(parameters: list[str]):
 
     Program.next_animation = FlashAnimation(Program.flash_color, flash_time)
     Program.modifying_flash = True
-    Program.is_interrupted = True
+    will_interrupt = True
     await aprint(">   Flashing!")
     await aprint("    For: %sms" % int(flash_time.total_seconds() * 1000))
     return parameters[used_params:]
@@ -376,7 +407,7 @@ async def traffic_command(parameters: list[str]):
 
     if len(parameters) > 0:
         frame_interval = timedelta(milliseconds = try_num(parameters[0]))
-        if frame_interval > timedelta(milliseconds=100):
+        if frame_interval >= timedelta(milliseconds=100):
             used_params += 1
         else:
             frame_interval = timedelta(milliseconds=300)
@@ -388,7 +419,12 @@ async def traffic_command(parameters: list[str]):
         else:
             density = 0.1
 
-    traffic_animation = TrafficAnimation(Program.color, frame_interval, 100, density)
+    traffic_animation = TrafficAnimation(
+        color = Program.color, 
+        frame_interval = frame_interval, 
+        road_size = 100, 
+        traffic_density = density
+    )
 
     Program.next_animation = traffic_animation
 

@@ -59,6 +59,8 @@ async def led_loop():
         if Program.is_paused: 
             if datetime.now() > Program.time_to_unpause:
                 Program.is_paused = False
+                if Program.performing_next_command:
+                    await do_my_command(Program.next_command)
             else:
                 continue
         if Program.is_interrupted:
