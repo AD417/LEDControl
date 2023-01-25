@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from .Animation import Animation
-from datetime import timedelta
-from ..RGB import RGB
 from dataclasses import dataclass
+from ..RGB import RGB
 
 @dataclass
 class AlternatingAnimation(Animation):

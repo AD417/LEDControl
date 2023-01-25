@@ -8,7 +8,7 @@ is_running: bool = True
 # The current animation used by the strip
 animation: Animation = KillAnimation()
 
-color: RGB = RGB(255,0,0)
+color: RGB = RGB(255,255,255)
 is_interrupted: bool = False
 interrupt: InterruptAnimation = FlashAnimation()
 

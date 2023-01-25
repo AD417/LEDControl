@@ -54,7 +54,6 @@ async def get_input():
 async def led_loop():
     while Program.is_running: 
         # Yield execution to the get_input asyncio loop, if necessary.
-        # Python cannot parallel process, unfortunately. 
         await asyncio.sleep(0.001)
         if Program.is_paused: 
             if datetime.now() > Program.time_to_unpause:

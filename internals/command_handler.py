@@ -288,7 +288,7 @@ async def flash_command(parameters: list[str]):
         if flash_time > timedelta():
             used_params += 1
         else: 
-            flash_time = 1
+            flash_time = timedelta(milliseconds=500)
 
     Program.next_animation = FlashAnimation(Program.flash_color, flash_time)
     Program.modifying_flash = True
@@ -312,9 +312,13 @@ async def kill_command(parameters: list[str]):
 
     kill_animation = KillAnimation()
     if used_params == 1:
-        # TODO: -k is incompatible with the current setup for flashing. 
+        # TODO: -k is incompatible with the current setup for flashing.
         # To be fair, dramatic flair does not require animations. 
-        Program.next_animation = TransitionAnimation(kill_time, Program.animation, kill_animation)
+        Program.next_animation = TransitionAnimation(
+            transition_time = kill_time, 
+            current_animation = Program.animation, 
+            future_animation = kill_animation
+        )
     else:
         Program.next_animation = kill_animation
 
@@ -387,9 +391,10 @@ async def pulse_command(parameters: list[str]):
         else: 
             pulse_interval = timedelta(seconds=1)
 
-    pulse_animation = PulseAnimation(Program.color, pulse_interval)
-
-    Program.next_animation = pulse_animation
+    Program.next_animation = PulseAnimation(
+        color = Program.color, 
+        frame_interval = pulse_interval
+    )
 
     await aprint(">   Pulsing the lights!")
     await aprint("    Pulse time: %ims" % int(pulse_interval.total_seconds() * 1000))
@@ -419,14 +424,12 @@ async def traffic_command(parameters: list[str]):
         else:
             density = 0.1
 
-    traffic_animation = TrafficAnimation(
+    Program.next_animation = TrafficAnimation(
         color = Program.color, 
         frame_interval = frame_interval, 
         road_size = 100, 
         traffic_density = density
     )
-
-    Program.next_animation = traffic_animation
 
     await aprint(f">   Time for traffic!")
     await aprint(f"    Cars move at 1 pixel per {int(frame_interval.total_seconds() * 1000)}ms")
@@ -453,38 +456,46 @@ async def transition_parameter(parameters: list[str]):
             await aprint("Warning: transition time provided was less than 50 *milli*seconds. Did you input seconds?")
         return parameters[1:]
 
-    Program.next_animation = TransitionAnimation(transition_time, Program.animation, Program.next_animation)
+    Program.next_animation = TransitionAnimation(
+        transition_time = transition_time, 
+        current_animation = Program.animation, 
+        future_animation = Program.next_animation
+    )
 
     return parameters[1:]
 
-async def wave_command(parameters: list[str]):
+async def wave_command(parameters: list[str]):  
     """Generate a moving wave effect, as a continuous version of the `alt` command. \n
     Legal Parameters: 
-    `period`: the time taken for the wave to move 1 wavelength. Given in milliseconds. Default 1000.
+    `frame_interval`: the time taken for the wave to move 1 pixel. Given in milliseconds. Default 200.
     `wave_length`: The size of one wave. Default 5.0. Can be a decimal. A wave is the distance from one fully unlit LED to another."""
 
-    period = timedelta(seconds=3)
+    frame_interval = timedelta(milliseconds=200)
     wave_length = 5.0
     used_params = 0
 
     if len(parameters) > 0:
-        period = timedelta(milliseconds = try_num(parameters[0]))
-        if period >= timedelta(milliseconds=50): 
+        frame_interval = timedelta(milliseconds = try_num(parameters[0]))
+        if frame_interval >= timedelta(milliseconds=50): 
             used_params = 1
         else:
-            period = timedelta(seconds=1)
+            frame_interval = timedelta(milliseconds=200)
 
     if used_params == 1 and len(parameters) > 1: 
-        wave_length = int(try_num(parameters[1]))
+        wave_length = try_num(parameters[1])
         if wave_length > 1: 
             used_params += 1
         else:
             wave_length = 3
 
-    Program.next_animation = WaveAnimation(Program.color, period, wave_length)
+    Program.next_animation = WaveAnimation(
+        color = Program.color, 
+        frame_interval = frame_interval, 
+        wave_length = wave_length
+    )
 
     await aprint(">   We're doing the wave!")
-    await aprint(f"    Alternates every {int(1000 * period.total_seconds())}ms")
+    await aprint(f"    Moves every {int(1000 * frame_interval.total_seconds())}ms")
     await aprint(f"    Wavelength: {wave_length}")
 
     return parameters[used_params:]
