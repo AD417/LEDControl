@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from .RGB import RGB
 
 COLORS = {
@@ -36,6 +37,15 @@ COLOR_SHORTHAND = {
     "w": "white",
     "y": "yellow",
 }
+
+def color_from_name(name: str):
+    try:
+        if len(name) == 1:
+            name = COLOR_SHORTHAND[name]
+        return COLORS[name]
+    except KeyError:
+        error = "%r is not a valid color name or shorthand" % name
+        raise argparse.ArgumentTypeError(error)
 
 def try_get_color(name: str):
     name = name.lower()
