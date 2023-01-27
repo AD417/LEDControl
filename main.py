@@ -2,7 +2,7 @@ from internals.LED_data import *
 from aio_stdout import ainput
 import asyncio
 from datetime import datetime
-from internals.command_handler import do_my_command
+from internals.command_handler2 import do_my_command
 import internals.Program as Program
 from rpi_ws281x import PixelStrip
 

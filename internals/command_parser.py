@@ -16,13 +16,13 @@ def time(delta: str) -> timedelta:
 color_parameter = ArgumentParser(add_help=False)
 color_parameter.add_argument(
     "-c", "--color",
+    type=color_from_name,
     help="Set the color of this animation",
 )
 
 future_parameter = ArgumentParser(add_help=False)
 future_parameter.add_argument(
     "-n", "--next",
-    nargs="+",
     help="Store a future command that we execute immediately after we complete this animation"
 )
 
@@ -51,6 +51,7 @@ transition_parameter = ArgumentParser(add_help=False)
 transition_parameter.add_argument(
     "-t", "--transition",
     type=time,
+    metavar="TIME",
     help="Set the amount of time it takes for this animation to complete"
 )
 
@@ -59,6 +60,7 @@ frame_interval_parameter = ArgumentParser(add_help=False)
 frame_interval_parameter.add_argument(
     "interval",
     type=time,
+    nargs="?",
     default="500",
     metavar="interval_ms",
     help="The amount of time between frames",
@@ -74,6 +76,7 @@ alternating_parser = ArgumentParser(
 alternating_parser.add_argument(
     "width",
     type=int,
+    nargs="?",
     default="3",
     help="The distance between pixels in the animation"
 )
@@ -94,17 +97,7 @@ color_parser.add_argument(
     help="Modify the color used for the flash instead",
 )
 
-echo_parser = ArgumentParser(
-    prog="echo",
-    #parents=None
-    add_help=True,
-    description="Print the rest of this command to the terminal",
-)
-echo_parser.add_argument(
-    "phrase",
-    nargs="+",
-    help="A string to echo",
-)
+# Echo needs no special parameter processing. 
 
 # Exit has no parameters, and the existence of parameter is completely irrelevant. 
 
@@ -124,7 +117,7 @@ fill_parser = ArgumentParser(
 
 kill_parser = ArgumentParser(
     prog="kill",
-    parents=[color_parameter, transition_parameter],
+    parents=[transition_parameter],
     add_help=True,
     description="Turn all the lights off",
 )
@@ -138,8 +131,9 @@ pause_parser = ArgumentParser(
 pause_parser.add_argument(
     "interval",
     type=time,
+    nargs="?",
     default=timedelta(days=1),
-    metavar="interval_ms",
+    metavar="interval-ms",
     help="The amount of time to pause Leave blank to make effectively infinite",
 )
 
@@ -156,6 +150,14 @@ traffic_parser = ArgumentParser(
     add_help=True,
     description="Create a traffic animation, emulating the lights of cars on a distant highway",
 )
+traffic_parser.add_argument(
+    "density",
+    type=float,
+    nargs="?",
+    default=10,
+    metavar="traffic-density",
+    help="The percentage of the road taken up by cars."
+)
 
 wave_parser = ArgumentParser(
     parents=[frame_interval_parameter, color_parameter, transition_parameter],
@@ -165,6 +167,7 @@ wave_parser = ArgumentParser(
 wave_parser.add_argument(
     "width",
     type=float,
+    nargs="?",
     default="5",
     metavar="wavelength",
     help="the size of one wave in the animation",
