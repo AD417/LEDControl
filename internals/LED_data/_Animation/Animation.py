@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from ..RGB import RGB
-from typing import ClassVar
 from dataclasses import dataclass, field
+from typing import ClassVar
+
+from ..RGB import RGB
 
 @dataclass
 class Animation(ABC):

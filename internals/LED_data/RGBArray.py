@@ -1,7 +1,9 @@
 from __future__ import annotations
+
+from rpi_ws281x import PixelStrip
+
 from ._Animation.Animation import Animation
 from .RGB import RGB
-from rpi_ws281x import PixelStrip
 
 class RGBArray():
     def __init__(self: RGBArray, array_length: int):

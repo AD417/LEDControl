@@ -1,7 +1,7 @@
 """Namespace of all valid command names"""
 from __future__ import annotations
+
 from typing_extensions import Final
-from types import SimpleNamespace
 
 ALTERNATING:    Final[list[str]] = ["alt"]
 COLOR:          Final[list[str]] = ["color"]

@@ -1,10 +1,14 @@
-from internals.LED_data import *
-from aio_stdout import ainput
+from __future__ import annotations
+
 import asyncio
 from datetime import datetime
+
+from rpi_ws281x import PixelStrip
+from aio_stdout import ainput
+
+from internals.LED_data import *
 from internals.command_handler2 import do_my_command
 import internals.Program as Program
-from rpi_ws281x import PixelStrip
 
 
 # LED strip configuration:

@@ -1,6 +1,8 @@
 """Program namespace containing typed global variables for use across the program."""
 from __future__ import annotations
+
 from datetime import datetime
+
 from .LED_data import *
 
 # Whether the program is running.

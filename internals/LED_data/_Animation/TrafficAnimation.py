@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from .Animation import Animation
 from datetime import timedelta
-from ..RGB import RGB
 import random
+
+from .Animation import Animation
+from ..RGB import RGB
 
 @dataclass
 class TrafficAnimation(Animation):

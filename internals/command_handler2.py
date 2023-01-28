@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from aio_stdout import aprint, flush
-import asyncio 
+from types import SimpleNamespace
+
 from . import Program
 from .commands import *
 from .command_parser import *
 from .LED_data import *
-from types import SimpleNamespace
 
 Log = SimpleNamespace(data="")
 
@@ -23,27 +22,27 @@ def do_my_command(full_command: str|list[str]):
     
     try:
         if command in ALTERNATING: 
-            parameters = alt_command(parameters)
+            alt_command(parameters)
         elif command in COLOR:
-            parameters = color_command(parameters)
+            color_command(parameters)
         elif command in ECHO:
-            parameters = echo_command(parameters)
+            echo_command(parameters)
         elif command in EXIT:
-            parameters = exit_command(parameters)
+            exit_command(parameters)
         elif command in FLASH:
-            parameters = flash_command(parameters)
+            flash_command(parameters)
         elif command in FILL:
-            parameters = fill_command(parameters)
+            fill_command(parameters)
         elif command in KILL:
-            parameters = kill_command(parameters)
+            kill_command(parameters)
         elif command in PAUSE:
-            parameters = pause_command(parameters)
+            pause_command(parameters)
         elif command in PULSE:
-            parameters = pulse_command(parameters)
+            pulse_command(parameters)
         elif command in TRAFFIC:
-            parameters = traffic_command(parameters)
+            traffic_command(parameters)
         elif command in WAVE:
-            parameters = wave_command(parameters)
+            wave_command(parameters)
 
         elif (Program.is_interrupted or Program.is_paused) and command == "<null>":
             Program.is_interrupted = False
@@ -54,8 +53,9 @@ def do_my_command(full_command: str|list[str]):
         if Log.data != "":
             print(Log.data.strip("\n"))
         
-    except ArgumentError as e:
+    except (ArgumentError) as e:
         if str(e) != "":
+            print(type(e))
             print(str(e).strip("\n "))
         
     

@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from argparse import ArgumentParser, ArgumentTypeError, REMAINDER, ArgumentError
+from argparse import ArgumentParser, ArgumentTypeError, ArgumentError
 from datetime import timedelta
-from .LED_data.color_constants import color_from_name
 from typing import NoReturn
+
+from .LED_data.color_constants import color_from_name
 
 ### Exit-avoiding version of argparse. 
 class LEDParser(ArgumentParser):
     def exit(self, status: int = ..., message: str | None = None) -> NoReturn:
-        if message is not None:
-            raise ArgumentError(message)
-        raise ArgumentError()
+        raise ArgumentError(None, message)
 
 
 ### "Types" used to cleanly get data from argparse.
@@ -117,6 +116,8 @@ alternating_parser.add_argument(
     default="3",
     help="The distance between pixels in the animation"
 )
+add_color_to(alternating_parser)
+add_transition_to(alternating_parser)
 
 color_parser = LEDParser(
     prog="color", 
@@ -154,8 +155,6 @@ add_transition_to(fill_parser)
 
 kill_parser = LEDParser(
     prog="kill",
-    parents=[_transition_parameter],
-    add_help=True,
     description="Turn all the lights off",
 )
 add_transition_to(kill_parser)

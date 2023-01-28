@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from .._Animation.Animation import Animation
-from ..RGB import RGB
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+
+from .._Animation.Animation import Animation
 
 @dataclass
 class InterruptAnimation(Animation):

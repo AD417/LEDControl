@@ -1,8 +1,10 @@
 from __future__ import annotations
+
+from dataclasses import dataclass
+import math
+
 from .Animation import Animation
 from ..RGB import RGB
-import math
-from dataclasses import dataclass
 
 @dataclass
 class WaveAnimation(Animation):

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from .Animation import Animation
 from dataclasses import dataclass
+
+from .Animation import Animation
 from ..RGB import RGB
 
 @dataclass

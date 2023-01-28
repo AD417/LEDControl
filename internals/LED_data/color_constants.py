@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+
 from .RGB import RGB
 
 COLORS = {
