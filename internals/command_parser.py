@@ -1,6 +1,17 @@
-from argparse import ArgumentParser, ArgumentTypeError
+from __future__ import annotations
+
+from argparse import ArgumentParser, ArgumentTypeError, REMAINDER, ArgumentError
 from datetime import timedelta
 from .LED_data.color_constants import color_from_name
+from typing import NoReturn
+
+### Exit-avoiding version of argparse. 
+class LEDParser(ArgumentParser):
+    def exit(self, status: int = ..., message: str | None = None) -> NoReturn:
+        if message is not None:
+            raise ArgumentError(message)
+        raise ArgumentError()
+
 
 ### "Types" used to cleanly get data from argparse.
 def time(delta: str) -> timedelta:
@@ -12,67 +23,93 @@ def time(delta: str) -> timedelta:
         raise ArgumentTypeError(error)
     return timedelta(milliseconds=numerical_delta)
 
-### Parameters that can easily be "subclassed" into commands.
-color_parameter = ArgumentParser(add_help=False)
-color_parameter.add_argument(
-    "-c", "--color",
-    type=color_from_name,
-    help="Set the color of this animation",
-)
+def number_within_range(value: str, lower: int, higher: int | None = None, is_int: bool = False):
+    """Evaluates if a value is within a given range
+    Parameters: 
+    `value`: The value to check
+    `lower`: The lower bound of acceptable values. Required.
+    `upper`: The upper bound of acceptable values. Optional. If unspecified, allows for no upper limit. """
+    num = float(value)
+    is_valid = True
+    if num < lower:
+        is_valid = False
+    if higher is not None and num > higher:
+        is_valid = False
 
-future_parameter = ArgumentParser(add_help=False)
-future_parameter.add_argument(
-    "-n", "--next",
-    help="Store a future command that we execute immediately after we complete this animation"
-)
+    if is_valid:
+        if is_int: 
+            return int(num)
+        return num
+    
+    error = "%r is not within range. " % value
+    if higher is not None:
+        error += "Value must be between %i and %i, inclusive." % (lower, higher)
+    else:
+        error += "Value must be at least %i." % lower
+    raise ArgumentError(error)
 
-kill_parameter = ArgumentParser(add_help=False)
-kill_parameter.add_argument(
-    "-k", "--kill-next",
-    action="store_true",
-    help="Whether we should kill the animation after this dramtic interrupt!"
-)
+### Otherwise optional parameters to add to parsers
+def add_color_to(parser: LEDParser):
+    parser.add_argument(
+        "-c", "--color",
+        type=color_from_name,
+        help="Set the color of this animation",
+    )
 
-pausing_parameter = ArgumentParser(add_help=False)
-pausing_parameter.add_argument(
-    "-p", "--pause",
-    action="store_true",
-    help="Whether we should pause this animation"
-)
+def add_future_to(parser: LEDParser):
+    parser.add_argument(
+        "-n", "--next",
+        nargs="...",
+        help="Store a future command that we execute immediately after we complete this animation"
+    )
 
-recursion_parameter = ArgumentParser(add_help=False)
-recursion_parameter.add_argument(
-    "-e", "--recursive",
-    action="store_true",
-    help="Whether the interrupt should repeat if enter is pressed with an empty input"
-)
+def add_kill_to(parser: LEDParser):
+    parser.add_argument(
+        "-k", "--kill-next",
+        action="store_true",
+        help="Whether we should kill the animation after this dramtic interrupt!"
+    )
 
-transition_parameter = ArgumentParser(add_help=False)
-transition_parameter.add_argument(
-    "-t", "--transition",
-    type=time,
-    metavar="TIME",
-    help="Set the amount of time it takes for this animation to complete"
-)
+def add_pause_to(parser: LEDParser):
+    parser.add_argument(
+        "-p", "--pause",
+        action="store_true",
+        help="Whether we should pause this animation"
+    )
 
-### Convenience parameters that can be used
-frame_interval_parameter = ArgumentParser(add_help=False)
-frame_interval_parameter.add_argument(
-    "interval",
-    type=time,
-    nargs="?",
-    default="500",
-    metavar="interval_ms",
-    help="The amount of time between frames",
-)
+def add_recursion_to(parser: LEDParser):
+    parser.add_argument(
+        "-e", "--recursive",
+        action="store_true",
+        help="Whether the interrupt should repeat if enter is pressed with an empty input"
+    )
+
+def add_transition_to(parser: LEDParser):
+    parser.add_argument(
+        "-t", "--transition",
+        type=time,
+        metavar="TIME",
+        help="Set the amount of time it takes for this animation to complete"
+    )
+
+
+### Positional parameters that can be added
+def add_positional_interval_to(parser: LEDParser, default_value_ms: int = 500):
+    parser.add_argument(
+        "interval",
+        type=time,
+        nargs="?",
+        default=str(default_value_ms),
+        metavar="interval_ms",
+        help="The amount of time between frames",
+    )
 
 
 ### Parsers.
-alternating_parser = ArgumentParser(
+alternating_parser = LEDParser(
     prog="alt",
-    parents=[frame_interval_parameter, color_parameter, transition_parameter], 
-    add_help=True
-)
+    description="Set the lights to alternate in a \"Theater Chase\" Animation.")
+add_positional_interval_to(alternating_parser)
 alternating_parser.add_argument(
     "width",
     type=int,
@@ -81,9 +118,8 @@ alternating_parser.add_argument(
     help="The distance between pixels in the animation"
 )
 
-color_parser = ArgumentParser(
+color_parser = LEDParser(
     prog="color", 
-    parents=[transition_parameter],
     description="Set the color used in the animation"
 )
 color_parser.add_argument(
@@ -96,36 +132,36 @@ color_parser.add_argument(
     action="store_true",
     help="Modify the color used for the flash instead",
 )
+add_transition_to(color_parser)
 
 # Echo needs no special parameter processing. 
 
 # Exit has no parameters, and the existence of parameter is completely irrelevant. 
 
-flash_parser = ArgumentParser(
+flash_parser = LEDParser(
     prog="flash",
-    parents=[frame_interval_parameter, color_parameter],
-    add_help=True,
     description="Make the lights flash for a brief interval before resuming the previous command",
 )
+add_positional_interval_to(flash_parser)
+add_color_to(flash_parser)
 
-fill_parser = ArgumentParser(
+fill_parser = LEDParser(
     prog="fill",
-    parents=[color_parameter, transition_parameter],
-    add_help=True,
     description="Make the lights all turn on to a single value",
 )
+add_color_to(fill_parser)
+add_transition_to(fill_parser)
 
-kill_parser = ArgumentParser(
+kill_parser = LEDParser(
     prog="kill",
-    parents=[transition_parameter],
+    parents=[_transition_parameter],
     add_help=True,
     description="Turn all the lights off",
 )
+add_transition_to(kill_parser)
 
-pause_parser = ArgumentParser(
+pause_parser = LEDParser(
     prog="pause",
-    #parents=None,
-    add_help=True,
     description="Halt the progression of the array's animation, either for a fixed interval or until the user manually overrides"
 )
 pause_parser.add_argument(
@@ -134,22 +170,25 @@ pause_parser.add_argument(
     nargs="?",
     default=timedelta(days=1),
     metavar="interval-ms",
-    help="The amount of time to pause Leave blank to make effectively infinite",
+    help="The amount of time to pause. Leave blank to make effectively infinite",
 )
 
-pulse_parser = ArgumentParser(
+pulse_parser = LEDParser(
     prog="pulse",
-    parents=[frame_interval_parameter, color_parameter, transition_parameter],
-    add_help=True,
-    description="Make the lights pulse on and off, in a very menacing way"
+    description="Make the lights pulse on and off, in a very menacing way",
+    epilog="Be careful with low values, as it may cause adverse effects for viewers with epillepsy."
 )
+add_positional_interval_to(pulse_parser, default_value_ms=3000)
+add_color_to(pulse_parser)
+add_transition_to(pulse_parser)
 
-traffic_parser = ArgumentParser(
+traffic_parser = LEDParser(
     prog="traffic",
-    parents=[frame_interval_parameter, color_parameter, transition_parameter],
-    add_help=True,
     description="Create a traffic animation, emulating the lights of cars on a distant highway",
 )
+add_positional_interval_to(traffic_parser, default_value_ms=250)
+add_color_to(traffic_parser)
+add_transition_to(traffic_parser)
 traffic_parser.add_argument(
     "density",
     type=float,
@@ -159,11 +198,13 @@ traffic_parser.add_argument(
     help="The percentage of the road taken up by cars."
 )
 
-wave_parser = ArgumentParser(
-    parents=[frame_interval_parameter, color_parameter, transition_parameter],
-    add_help=True,
+wave_parser = LEDParser(
+    prog="wave",
     description="Make the lights move in a continuous, wave-like fashion",
 )
+add_positional_interval_to(wave_parser)
+add_color_to(wave_parser)
+add_transition_to(wave_parser)
 wave_parser.add_argument(
     "width",
     type=float,
