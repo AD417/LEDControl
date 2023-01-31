@@ -53,12 +53,14 @@ def do_my_command(full_command: str|list[str]):
         if Log.data != "":
             print(Log.data.strip("\n"))
         
-    except (ArgumentError) as e:
-        if str(e) != "":
-            print(type(e))
-            print(str(e).strip("\n "))
+    except (ValueError, TypeError) as e:
+        message = str(e).strip("\n ")
+
+        is_actual_error = len(message.split(":")) > 2 and message.split(":")[2] != ""
+
+        if type(e) == TypeError or is_actual_error:
+            print(str(e).strip("\n"))
         
-    
 
 
 def sanitize(command: str) -> list[str]:
@@ -67,6 +69,7 @@ def sanitize(command: str) -> list[str]:
         command, _ = command.split("#")
     command = command.strip().lower()
     return command.split()
+
 
 def color_parameter(color: RGB | None, next_animation: Animation) -> Animation:
     if color:

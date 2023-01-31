@@ -8,8 +8,10 @@ from .LED_data.color_constants import color_from_name
 
 ### Exit-avoiding version of argparse. 
 class LEDParser(ArgumentParser):
-    def exit(self, status: int = ..., message: str | None = None) -> NoReturn:
-        raise ArgumentError(None, message)
+    def exit(self, status: int = ..., message: str | None = "") -> NoReturn:
+        if message is None:
+            message = ""
+        raise ValueError(message)
 
 
 ### "Types" used to cleanly get data from argparse.
@@ -93,7 +95,7 @@ def add_transition_to(parser: LEDParser):
 
 
 ### Positional parameters that can be added
-def add_positional_interval_to(parser: LEDParser, default_value_ms: int = 500):
+def add_required_interval_to(parser: LEDParser, default_value_ms: int = 500):
     parser.add_argument(
         "interval",
         type=time,
@@ -103,19 +105,22 @@ def add_positional_interval_to(parser: LEDParser, default_value_ms: int = 500):
         help="The amount of time between frames",
     )
 
+def add_required_width_to(parser: LEDParser, is_int: bool = False, default_width_px: int = 3, help: str = ""):
+    parser.add_argument(
+        "width",
+        type=int if is_int else float,
+        nargs="?",
+        default=str(default_width_px),
+        metavar="width",
+        help="The space between bright pixels on the display" if help == "" else help,
+    )
 
 ### Parsers.
 alternating_parser = LEDParser(
     prog="alt",
     description="Set the lights to alternate in a \"Theater Chase\" Animation.")
-add_positional_interval_to(alternating_parser)
-alternating_parser.add_argument(
-    "width",
-    type=int,
-    nargs="?",
-    default="3",
-    help="The distance between pixels in the animation"
-)
+add_required_interval_to(alternating_parser)
+add_required_width_to(alternating_parser, is_int=True, help="The distance between pixels in the animation")
 add_color_to(alternating_parser)
 add_transition_to(alternating_parser)
 
@@ -143,8 +148,9 @@ flash_parser = LEDParser(
     prog="flash",
     description="Make the lights flash for a brief interval before resuming the previous command",
 )
-add_positional_interval_to(flash_parser)
+add_required_interval_to(flash_parser)
 add_color_to(flash_parser)
+add_recursion_to(flash_parser)
 
 fill_parser = LEDParser(
     prog="fill",
@@ -177,7 +183,7 @@ pulse_parser = LEDParser(
     description="Make the lights pulse on and off, in a very menacing way",
     epilog="Be careful with low values, as it may cause adverse effects for viewers with epillepsy."
 )
-add_positional_interval_to(pulse_parser, default_value_ms=3000)
+add_required_interval_to(pulse_parser, default_value_ms=3000)
 add_color_to(pulse_parser)
 add_transition_to(pulse_parser)
 
@@ -185,7 +191,7 @@ traffic_parser = LEDParser(
     prog="traffic",
     description="Create a traffic animation, emulating the lights of cars on a distant highway",
 )
-add_positional_interval_to(traffic_parser, default_value_ms=250)
+add_required_interval_to(traffic_parser, default_value_ms=250)
 add_color_to(traffic_parser)
 add_transition_to(traffic_parser)
 traffic_parser.add_argument(
@@ -201,18 +207,10 @@ wave_parser = LEDParser(
     prog="wave",
     description="Make the lights move in a continuous, wave-like fashion",
 )
-add_positional_interval_to(wave_parser)
+add_required_interval_to(wave_parser)
 add_color_to(wave_parser)
 add_transition_to(wave_parser)
-wave_parser.add_argument(
-    "width",
-    type=float,
-    nargs="?",
-    default="5",
-    metavar="wavelength",
-    help="the size of one wave in the animation",
-)
-
+add_required_width_to(wave_parser, help="the size of one wave in the animation")
 
 
 

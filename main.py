@@ -40,7 +40,7 @@ async def on_interrupt():
         Program.is_interrupted = False
         if Program.performing_next_command:
             Program.performing_next_command = False
-            await do_my_command(Program.next_command)
+            do_my_command(Program.next_command)
 
 async def get_input(): 
     while Program.is_running:
@@ -53,7 +53,7 @@ async def get_input():
         if full_command == "" and Program.performing_recursion:
             full_command = Program.recursive_command
 
-        await do_my_command(full_command)
+        do_my_command(full_command)
 
 async def led_loop():
     while Program.is_running: 
@@ -63,7 +63,7 @@ async def led_loop():
             if datetime.now() > Program.time_to_unpause:
                 Program.is_paused = False
                 if Program.performing_next_command:
-                    await do_my_command(Program.next_command)
+                    do_my_command(Program.next_command)
             else:
                 continue
         if Program.is_interrupted:
