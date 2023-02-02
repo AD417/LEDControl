@@ -13,7 +13,11 @@ Log = SimpleNamespace(data="")
 def do_my_command(full_command: str|list[str]):
     """Execute a command provided by the user"""
     Log.data = ""
-    parameters = sanitize(full_command)
+    parameters = []
+    if type(full_command) == str:
+        parameters = sanitize(full_command)
+    else:
+        parameters = full_command.copy()
     command = ""
     if len(parameters) != 0:
         command = parameters.pop(0)
@@ -56,9 +60,9 @@ def do_my_command(full_command: str|list[str]):
     except (ValueError, TypeError) as e:
         message = str(e).strip("\n ")
 
-        is_actual_error = len(message.split(":")) > 2 and message.split(":")[2] != ""
+        is_null_error = len(message.split(":")) == 3 and message.split(":")[2] == ""
 
-        if type(e) == TypeError or is_actual_error:
+        if not is_null_error:
             print(str(e).strip("\n"))
         
 
@@ -69,6 +73,31 @@ def sanitize(command: str) -> list[str]:
         command, _ = command.split("#")
     command = command.strip().lower()
     return command.split()
+
+def validate(value: int|float|timedelta, lower: int|timedelta, higher: int | None = None):
+    """Evaluates if a value is within a given range.
+    Parameters: 
+    `value`: The value to check
+    `lower`: The lower bound of acceptable values. Required.
+    `upper`: The upper bound of acceptable values. Optional. If unspecified, allows for no upper limit. """
+    
+    if isinstance(value, timedelta): 
+        value = value.total_seconds() * 1000
+
+    is_valid = True
+    if value < lower:
+        is_valid = False
+    if higher is not None and value > higher:
+        is_valid = False
+
+    if is_valid: return
+    
+    error = "%r is not within range. " % value
+    if higher is not None:
+        error += "Value must be between %i and %i, inclusive." % (lower, higher)
+    else:
+        error += "Value must be at least %i." % lower
+    raise ValueError(error)
 
 
 def color_parameter(color: RGB | None, next_animation: Animation) -> Animation:
@@ -89,7 +118,6 @@ def transition_parameter(transition_time: timedelta | None, next_animation: Anim
     return next_animation
 
 
-
 def alt_command(parameters: list[str]): 
     """
     Set the state of the LEDs to alternate in a theater chase.\n
@@ -99,6 +127,9 @@ def alt_command(parameters: list[str]):
     """
     args = alternating_parser.parse_args(parameters)
     
+    validate(args.interval, 50)
+    validate(args.width, 2)
+
     next_animation = AlternatingAnimation(
         color = Program.color,
         frame_interval = args.interval,
@@ -170,7 +201,7 @@ def flash_command(parameters: list[str]):
     args = flash_parser.parse_args(parameters)
     
     next_animation = FlashAnimation(
-        color = Program.color,
+        color = Program.flash_color,
         frame_interval = args.interval
     )
     
@@ -219,6 +250,8 @@ def pulse_command(parameters: list[str]):
     `pulse_interval`: The amount of time each pulse takes. Given in milliseconds. A pulse is the time it takes for the animation to go from fully off to fully on to fully off."""
     args = pulse_parser.parse_args(parameters)
 
+    validate(args.interval, 500)
+
     next_animation = PulseAnimation(
         color = Program.color,
         frame_interval = args.interval,
@@ -238,6 +271,9 @@ def traffic_command(parameters: list[str]):
     `frame_interval`: the interval between frames. Given in milliseconds. Default 300ms. Must be at at least 100ms. An interval is the time taken for the lights to move one pixel.
     `traffic_density`: how much traffic is on the road. Given as a percentage from 0-100%. Default 10%. Values above 50% may ruin the effect."""
     args = traffic_parser.parse_args(parameters)
+
+    validate(args.interval, 100)
+    validate(args.density, 0, 100)
 
     next_animation = TrafficAnimation(
         color = Program.color,
@@ -261,6 +297,9 @@ def wave_command(parameters: list[str]):
     `frame_interval`: the time taken for the wave to move 1 pixel. Given in milliseconds. Default 200.
     `wave_length`: The size of one wave. Default 5.0. Can be a decimal. A wave is the distance from one fully unlit LED to another."""
     args = wave_parser.parse_args(parameters)
+
+    validate(args.interval, 100)
+    validate(args.width, 2)
 
     next_animation = WaveAnimation(
         color = Program.color,

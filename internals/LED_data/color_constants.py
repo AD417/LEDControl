@@ -8,7 +8,7 @@ COLORS = {
     "black": RGB(0, 0, 0),
     "blue": RGB(0, 0, 255),
     "daytime": RGB(255, 127, 63),
-    "green": RGB(0, 128, 0),
+    "green": RGB(0, 255, 0),
     "magenta": RGB(255, 0, 255),
     "midnight": RGB(63, 0, 127),
     "orange": RGB(255, 127, 0),

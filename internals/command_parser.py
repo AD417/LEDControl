@@ -24,30 +24,6 @@ def time(delta: str) -> timedelta:
         raise ArgumentTypeError(error)
     return timedelta(milliseconds=numerical_delta)
 
-def number_within_range(value: str, lower: int, higher: int | None = None, is_int: bool = False):
-    """Evaluates if a value is within a given range
-    Parameters: 
-    `value`: The value to check
-    `lower`: The lower bound of acceptable values. Required.
-    `upper`: The upper bound of acceptable values. Optional. If unspecified, allows for no upper limit. """
-    num = float(value)
-    is_valid = True
-    if num < lower:
-        is_valid = False
-    if higher is not None and num > higher:
-        is_valid = False
-
-    if is_valid:
-        if is_int: 
-            return int(num)
-        return num
-    
-    error = "%r is not within range. " % value
-    if higher is not None:
-        error += "Value must be between %i and %i, inclusive." % (lower, higher)
-    else:
-        error += "Value must be at least %i." % lower
-    raise ArgumentError(error)
 
 ### Otherwise optional parameters to add to parsers
 def add_color_to(parser: LEDParser):
@@ -66,7 +42,7 @@ def add_future_to(parser: LEDParser):
 
 def add_kill_to(parser: LEDParser):
     parser.add_argument(
-        "-k", "--kill-next",
+        "-k", "--kill",
         action="store_true",
         help="Whether we should kill the animation after this dramtic interrupt!"
     )
@@ -211,9 +187,3 @@ add_required_interval_to(wave_parser)
 add_color_to(wave_parser)
 add_transition_to(wave_parser)
 add_required_width_to(wave_parser, help="the size of one wave in the animation")
-
-
-
-
-
-
