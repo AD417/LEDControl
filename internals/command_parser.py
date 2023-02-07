@@ -4,7 +4,7 @@ from argparse import ArgumentParser, ArgumentTypeError, ArgumentError
 from datetime import timedelta
 from typing import NoReturn
 
-from .LED_data.color_constants import color_from_name
+from .LED_data.color_constants import color_from_name, unshorten_color
 
 ### Exit-avoiding version of argparse. 
 class LEDParser(ArgumentParser):
@@ -24,6 +24,13 @@ def time(delta: str) -> timedelta:
         raise ArgumentTypeError(error)
     return timedelta(milliseconds=numerical_delta)
 
+def color_name(color: str) -> str:
+    new_color = color
+    if len(color) == 1:
+        new_color = unshorten_color(color)
+    if len(new_color) == 0:
+        raise ArgumentError("Invalid color name: %r" % color)
+    return new_color
 
 ### Otherwise optional parameters to add to parsers
 def add_color_to(parser: LEDParser):
@@ -106,8 +113,32 @@ color_parser = LEDParser(
 )
 color_parser.add_argument(
     "color", 
-    type=color_from_name,
+    type=color_name,
     help="The color to change the animation to"
+)
+color_parser.add_argument(
+    "red",
+    type=int,
+    default=-1,
+    nargs="?",
+    metavar="R",
+    help="An amount of red to add. Requires \"color\" to be custom."
+)
+color_parser.add_argument(
+    "green",
+    type=int,
+    default=-1,
+    nargs="?",
+    metavar="G",
+    help="An amount of green to add. Requires \"color\" to be custom."
+)
+color_parser.add_argument(
+    "blue",
+    type=int,
+    default=-1,
+    nargs="?",
+    metavar="B",
+    help="An amount of blue to add. Requires \"color\" to be custom."
 )
 color_parser.add_argument(
     "-f", "--flash",

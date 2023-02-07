@@ -40,15 +40,24 @@ COLOR_SHORTHAND = {
 }
 
 def color_from_name(name: str):
+    """Get a full color name from a single-letter shorthand. \n
+    Parameters:
+    `name`: A letter for the color we are extracting.
+    `returns`: a longer name indicating the full name of the color.
+    `raises`: `ValueError`, if the shorthand is invalid."""
     try:
         if len(name) == 1:
             name = COLOR_SHORTHAND[name]
         return COLORS[name]
     except KeyError:
         error = "%r is not a valid color name or shorthand" % name
-        raise argparse.ArgumentTypeError(error)
+        raise ValueError(error)
 
 def try_get_color(name: str):
+    """Create an RGB color from a name.
+    Parameters:
+    `name`: the name of the color used. Cannot be a shorthand.
+    `returns`: a boolean indicating if the operation was successful, and an RGB color."""
     name = name.lower()
     color = None
     # Check to make sure the color specified actually exists. 

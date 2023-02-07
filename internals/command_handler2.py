@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from types import SimpleNamespace
+from typing import Any
 
 from . import Program
 from .commands import *
@@ -173,18 +174,30 @@ def color_command(parameters: list[str]):
     Legal parameters:
     `color`: The name of the color being used. Required. Value can be a single letter.
     `[-f]`: If we should update the flash or not."""
-    args = color_parser.parse_args(parameters)
+    args = color_parser.parse_args(parameters)  
+
+    next_color = RGB(0,0,0)
+    color_name = ""
+
+    if args.color == "custom":
+        next_color = custom_color_handler(args)
+        color_name = repr(next_color)
+    else:
+        success, next_color = color_constants.try_get_color(args.color)
+        if not success:
+            raise ValueError("%r is an invalid color name or shorthand" % args.color)
+        color_name = args.color
 
     if args.flash:
         next_animation = Program.interrupt.copy()
-        Program.flash_color = args.color
-        Log.data += "Updating the flash color to: %r\n" % args.color
+        Program.flash_color = next_color
+        Log.data += "Updating the flash color to: %s\n" % color_name
     else:
         next_animation = Program.animation.copy()
-        Program.color = args.color
-        Log.data += "Updating the primary color to: %r\n" % args.color
+        Program.color = next_color
+        Log.data += "Updating the primary color to: %s\n" % color_name
     
-    next_animation.update_color_to(args.color)
+    next_animation.update_color_to(next_color)
     
     if not args.flash:
         next_animation = transition_parameter(args.transition, next_animation)
@@ -193,6 +206,23 @@ def color_command(parameters: list[str]):
         Program.interrupt = next_animation
     else:
         Program.animation = next_animation
+
+def custom_color_handler(color_code: Any) -> RGB:
+    valid_colors = 0
+    try:
+        if color_code.red != -1:
+            valid_colors += 1
+        if color_code.blue != -1:
+            valid_colors += 1
+        if color_code.green != -1:
+            valid_colors += 1
+        if valid_colors != 3: raise ValueError()
+    except (AttributeError, ValueError):
+        raise ValueError("Missing parameters: expected 3 color values but got %i" % valid_colors)
+    validate(color_code.red, 0, 255)
+    validate(color_code.green, 0, 255)
+    validate(color_code.blue, 0, 255)
+    return RGB(color_code.red, color_code.green, color_code.blue)
 
 def echo_command(parameters: list[str]):
     """Print a statement to the console. Used in automated scripts to instruct the user on specifics involving cues."""
