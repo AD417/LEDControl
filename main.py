@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
 from datetime import datetime
 
@@ -24,7 +25,9 @@ LED_CHANNEL = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 ARRAY = RGBArray(LED_COUNT)
 
 STRIP = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
-STRIP.begin()
+
+dry_run = False
+print("hello")
 
 async def on_frame():
     ARRAY.update_strip_using(Program.animation)
@@ -43,19 +46,26 @@ async def on_interrupt():
             do_my_command(Program.next_command)
 
 async def get_input(): 
+    print("\n$ ", end="")
     while Program.is_running:
         try:
-            full_command = (await ainput("$ ")).strip().lower()
+            full_command = (await ainput()).strip().lower()
         except KeyboardInterrupt: 
             # This except never seems to trigger. Ah well. 
             full_command = "exit"
         
-        if full_command == "" and Program.performing_recursion:
-            full_command = Program.recursive_command
+        if Program.performing_recursion:
+            if full_command == "":
+                full_command = Program.recursive_command
+            else:
+                print("Aborting recursion.")
+                Program.performing_recursion = False
 
         do_my_command(full_command)
 
 async def led_loop():
+    if dry_run: return
+    STRIP.begin()
     while Program.is_running: 
         # Yield execution to the get_input asyncio loop, if necessary.
         await asyncio.sleep(0.001)
@@ -78,4 +88,11 @@ async def main():
     await asyncio.gather(led_loop(), get_input())
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-d", "--dry-run",
+        action="store_true"
+    )
+    args = parser.parse_args()
+    dry_run = args.dry_run
     asyncio.run(main()) 

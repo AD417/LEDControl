@@ -33,7 +33,7 @@ def add_color_to(parser: LEDParser):
         help="Set the color of this animation",
     )
 
-def add_future_to(parser: LEDParser):
+def add_future_to(parser: ArgumentParser):
     parser.add_argument(
         "-n", "--next",
         nargs="...",
@@ -126,6 +126,10 @@ flash_parser = LEDParser(
 )
 add_required_interval_to(flash_parser)
 add_color_to(flash_parser)
+flash_parser_futures = flash_parser.add_mutually_exclusive_group()
+add_future_to(flash_parser_futures)
+add_kill_to(flash_parser_futures)
+
 add_recursion_to(flash_parser)
 
 fill_parser = LEDParser(

@@ -14,7 +14,7 @@ def do_my_command(full_command: str|list[str]):
     """Execute a command provided by the user"""
     Log.data = ""
     parameters = []
-    if type(full_command) == str:
+    if isinstance(full_command, str):
         parameters = sanitize(full_command)
     else:
         parameters = full_command.copy()
@@ -48,7 +48,7 @@ def do_my_command(full_command: str|list[str]):
         elif command in WAVE:
             wave_command(parameters)
 
-        elif (Program.is_interrupted or Program.is_paused) and command == "<null>":
+        elif command == "<null>":
             Program.is_interrupted = False
             Program.is_paused = False
         else:
@@ -64,6 +64,23 @@ def do_my_command(full_command: str|list[str]):
 
         if not is_null_error:
             print(str(e).strip("\n"))
+
+    if not Program.is_running: return
+
+    if Program.performing_recursion:
+        if Program.recursive_command == "":
+            Program.recursive_command = full_command
+    else:
+        Program.recursive_command = ""
+
+    existing_event_processing = Program.performing_next_command \
+                             or Program.is_paused \
+                             or Program.performing_recursion
+    
+    if existing_event_processing:
+        print("... ", end="")
+    else: 
+        print("$ ", end="")
         
 
 
@@ -74,15 +91,15 @@ def sanitize(command: str) -> list[str]:
     command = command.strip().lower()
     return command.split()
 
-def validate(value: int|float|timedelta, lower: int|timedelta, higher: int | None = None):
+def validate(value: int|float|timedelta, lower: int, higher: int | None = None):
     """Evaluates if a value is within a given range.
     Parameters: 
     `value`: The value to check
     `lower`: The lower bound of acceptable values. Required.
     `upper`: The upper bound of acceptable values. Optional. If unspecified, allows for no upper limit. """
-    
+
     if isinstance(value, timedelta): 
-        value = value.total_seconds() * 1000
+        value = float(value.total_seconds() * 1000)
 
     is_valid = True
     if value < lower:
@@ -116,6 +133,12 @@ def transition_parameter(transition_time: timedelta | None, next_animation: Anim
             future_animation = next_animation
         )
     return next_animation
+
+def next_parameter(next_command: list[str] | None) -> None:
+    if next_command is None: return
+
+    Program.next_command = next_command
+    Program.performing_next_command = True
 
 
 def alt_command(parameters: list[str]): 
@@ -209,6 +232,13 @@ def flash_command(parameters: list[str]):
     Log.data += "Flash time: %ims\n" % (args.interval.total_seconds() * 1000)
 
     next_animation = color_parameter(args.color, next_animation)
+
+    if args.recursive:
+        Program.performing_recursion = True
+
+    if args.kill: next_parameter(["kill"])
+    else: next_parameter(args.next)
+    # print(args.next)
 
     Program.interrupt = next_animation
     Program.is_interrupted = True
