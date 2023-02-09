@@ -27,7 +27,6 @@ ARRAY = RGBArray(LED_COUNT)
 STRIP = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
 
 dry_run = False
-print("hello")
 
 async def on_frame():
     ARRAY.update_strip_using(Program.animation)
@@ -95,4 +94,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     dry_run = args.dry_run
+
+    startup_time = datetime.now()
+
+    welcome_message = "LEDControl v0.2.0\n"
+    welcome_message += "Program created by AD417. Software is in BETA: expect bugs!\n"
+    welcome_message += startup_time.strftime("Last login: %a %b %d %H:%M:%S %Y")
+    print(welcome_message)
     asyncio.run(main()) 

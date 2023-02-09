@@ -118,14 +118,18 @@ def validate(value: int|float|timedelta, lower: int, higher: int | None = None):
     raise ValueError(error)
 
 
-def color_parameter(color: RGB | None, next_animation: Animation) -> Animation:
+def color_parameter(color: RGB | None, next_animation: Animation, is_flash: bool = False) -> Animation:
     if color:
         Log.data += "-c: Changing color to %r\n" % color
-        Program.color = color
+        if is_flash:
+            Program.flash_color = color
+        else:
+            Program.color = color
         next_animation.update_color_to(color)
     return next_animation
 
 def transition_parameter(transition_time: timedelta | None, next_animation: Animation) -> Animation:
+    """Set the amount of time that it will take for the program to transition, if necessary. """
     if transition_time:
         Log.data += "-t: Transitioning over %ims\n" % (transition_time.total_seconds() * 1000)
         return TransitionAnimation(
@@ -136,6 +140,7 @@ def transition_parameter(transition_time: timedelta | None, next_animation: Anim
     return next_animation
 
 def next_parameter(next_command: list[str] | None) -> None:
+    """Set the next command to execute, if necessary."""
     if next_command is None: return
 
     Program.next_command = next_command
@@ -261,7 +266,7 @@ def flash_command(parameters: list[str]):
     Log.data += "Flashing the lights!\n"
     Log.data += "Flash time: %ims\n" % (args.interval.total_seconds() * 1000)
 
-    next_animation = color_parameter(args.color, next_animation)
+    next_animation = color_parameter(args.color, next_animation, is_flash=True)
 
     if args.recursive:
         Program.performing_recursion = True
