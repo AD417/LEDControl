@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing_extensions import Final
 
+ALIAS:          Final[list[str]] = ["alias"]
 ALTERNATING:    Final[list[str]] = ["alt"]
 COLOR:          Final[list[str]] = ["color"]
 ECHO:           Final[list[str]] = ["echo", "#", "//"]

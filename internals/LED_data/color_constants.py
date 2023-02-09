@@ -53,6 +53,17 @@ def color_from_name(name: str):
         error = "%r is not a valid color name or shorthand" % name
         raise ValueError(error)
 
+def name_from_color(color: RGB) -> str:
+    """Get a name for a RGB value. \n
+    Parameters:
+    `color`: an RGB color value.
+    `returns`: a name, or a repr of the color if none is found."""
+    for color_name in COLORS:
+        if COLORS[color_name] == color:
+            return color_name
+    
+    return repr(color)
+
 def try_get_color(name: str):
     """Create an RGB color from a name.
     Parameters:
@@ -73,3 +84,8 @@ def unshorten_color(char: str):
         return COLOR_SHORTHAND[char]
     except KeyError:
         return ""
+
+if __name__ == "__main__": 
+    print(name_from_color(RGB(0,0,0)))
+    print(name_from_color(RGB(255,100,255)))
+    print(name_from_color(RGB(40,50,60)))

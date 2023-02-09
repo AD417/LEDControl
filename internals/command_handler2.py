@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from types import SimpleNamespace
 from typing import Any
 
+from . import Alias
 from . import Program
 from .commands import *
 from .command_parser import *
@@ -26,7 +27,9 @@ def do_my_command(full_command: str|list[str]):
         command = "<null>"
     
     try:
-        if command in ALTERNATING: 
+        if command in ALIAS:
+            alias_command(parameters)
+        elif command in ALTERNATING: 
             alt_command(parameters)
         elif command in COLOR:
             color_command(parameters)
@@ -90,6 +93,10 @@ def sanitize(command: str) -> list[str]:
     if "#" in command:
         command, _ = command.split("#")
     command = command.strip().lower()
+
+    if Alias.alias_exists_for(command):
+        return Alias.command_for_alias(command)
+    
     return command.split()
 
 def validate(value: int|float|timedelta, lower: int, higher: int | None = None):
@@ -146,6 +153,28 @@ def next_parameter(next_command: list[str] | None) -> None:
     Program.next_command = next_command
     Program.performing_next_command = True
 
+def alias_command(parameters: list[str]):
+    """
+    Create a new alias that the program can use in place of a fully typed out command. \n
+    Legal parameters:
+    `Alias Name`: The name of the Alias. 
+    `Command`: The command this alias executes. 
+    """
+    if len(parameters) == 0: 
+        print(Alias.Aliases)
+        return
+    args = alias_parser.parse_args(parameters)
+    
+    if args.alias_name == "alias":
+        raise ValueError("Cannot assign an alias to 'alias'! (ya dummy)")
+    
+    Alias.create_alias(args.alias_name, args.command)
+    Alias.save_aliases()
+
+    Log.data += "Alias successfully created!\n"
+    Log.data += "Alias: %s\n" % args.alias_name
+    Log.data += "Command: %s\n" % " ".join(args.command)
+
 
 def alt_command(parameters: list[str]): 
     """
@@ -179,6 +208,12 @@ def color_command(parameters: list[str]):
     Legal parameters:
     `color`: The name of the color being used. Required. Value can be a single letter.
     `[-f]`: If we should update the flash or not."""
+
+    if len(parameters) == 0:
+        Log.data += "Current main color:  %s\n" % color_constants.name_from_color(Program.color)
+        Log.data += "Current flash color: %s" % color_constants.name_from_color(Program.flash_color)
+        return
+    
     args = color_parser.parse_args(parameters)  
 
     next_color = RGB(0,0,0)

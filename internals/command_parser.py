@@ -99,6 +99,22 @@ def add_required_width_to(parser: LEDParser, is_int: bool = False, default_width
     )
 
 ### Parsers.
+alias_parser = LEDParser(
+    prog="alias",
+    description="Create a new alias for a long command you hate typing out or need to use repeatedly",
+    epilog="These aliases are stored locally. Edit the /config/alias file to edit or remove",
+)
+alias_parser.add_argument(
+    "alias_name",
+    metavar="name",
+    help="The name of the alias",
+)
+alias_parser.add_argument(
+    "command",
+    nargs="...",
+    help="The command that this alias executes",
+)
+
 alternating_parser = LEDParser(
     prog="alt",
     description="Set the lights to alternate in a \"Theater Chase\" Animation.")
