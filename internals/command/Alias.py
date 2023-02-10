@@ -4,7 +4,7 @@ from __future__ import annotations
 import os.path
 
 Aliases: dict[str, list[str]] = {}
-alias_relative_file: str = "../config/alias.txt"
+alias_relative_file: str = "../../config/alias.txt"
 
 def alias_exists_for(name: str):
     return name in Aliases.keys()

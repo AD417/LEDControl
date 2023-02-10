@@ -5,10 +5,10 @@ from types import SimpleNamespace
 from typing import Any
 
 from . import Alias
-from . import Program
+from .. import Program
 from .commands import *
-from .command_parser import *
-from .LED_data import *
+from .parser import *
+from ..LED_data import *
 
 Log = SimpleNamespace(data="")
 

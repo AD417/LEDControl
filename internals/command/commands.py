@@ -1,4 +1,4 @@
-"""Namespace of all valid command names"""
+"""Namespace of all built-in valid command names"""
 from __future__ import annotations
 
 from typing_extensions import Final

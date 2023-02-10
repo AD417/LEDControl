@@ -4,7 +4,7 @@ from argparse import ArgumentParser, ArgumentTypeError, ArgumentError
 from datetime import timedelta
 from typing import NoReturn
 
-from .LED_data.color_constants import color_from_name, unshorten_color
+from ..LED_data.color_constants import color_from_name, unshorten_color
 
 ### Exit-avoiding version of argparse. 
 class LEDParser(ArgumentParser):
