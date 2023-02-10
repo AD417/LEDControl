@@ -1,0 +1,225 @@
+### Program Self-Test
+### 
+### This program is intended to test all core functionality of this program. 
+### Ideally, it should be possible to run the program all the way through without stopping, 
+### but at times it will be beneficial or necessary to determine if the program's visual output is correct. 
+
+# When the lights are activated, they should turn on. 
+on
+
+# When a command is run, the intended output of that command should be shown. 
+kill
+on
+alt
+pulse
+wave
+traffic
+
+# When a command intended to interrupt the LED loop occurs, the interrupt should run, and normal execution should resume after the interrupt completes is aborted.
+alt 
+flash
+pause
+
+# When a new color is provided, the LEDs should change to that new color. 
+on
+color red
+color blue
+color green
+
+# When a new color that is a combination of multiple RGB values is provided, the LEDs should change to that new color, and the new color should be the correct hue after correcting for color math in the LED array.
+color orange
+color yellow
+color magenta
+color pink
+color black
+color daytime
+color midnight
+
+# When a color shorthand (Single character) is provided, the color indicated should be correctly determined and displayed by the program.
+color w
+color r 
+color o 
+color y 
+color g 
+color b 
+color m 
+color p 
+color k 
+color d 
+color i 
+
+# When a color command is executed without a parameter, it should fail to run. 
+# Intentional error
+color 
+
+# When a custom color is provided, the program should attempt to parse that color and display it to the LEDs.
+color custom 255 255 255
+color custom 0 0 0
+color custom 255 0 0
+color custom 0 255 0
+color custom 0 0 255
+# When a malformed color command is provided, the program should reject it and print out an error.
+# Intentional errors:
+color custom
+color custom 255
+color custom 255 255
+color custom 300 0 0
+color custom A B C
+
+color white
+
+# When an animation command is provided with some or all of its parameters, it should attempt to fill in missing parameters and then attempt to meet the operator's specifications. 
+
+# Alternate Command - interval
+# When an alternating command is provided with an interval over 50ms, the rate of change of the LEDs should match that value in milliseconds. 
+alt 200
+alt 1000
+# Intentional error
+alt 1
+
+# Alternate Command - Spacing
+# When an alternating command is provided with a spacing of more than 1, the lit LEDs on the array should be spaced apart appropriately. 
+alt 500 3
+alt 500 2
+alt 500 10
+# Intentional error
+alt 500 1
+
+# Echo Command
+# When the echo command is run, it should print the rest of the command to the console.
+echo A test of the Echo Command is currently running. 
+# The following line is intended behaviour... if you actually attempt to use it this way. 
+echo 
+
+# Flash Command
+# When a flash command is provided with a timing parameter, it should flash the lights for that interval. 
+flash 500
+flash 1000
+flash 50
+# Given a flash command that is running, when the user presses enter, they should instantly end the flash regardless of its timer. 
+flash 1000000
+# Potential error: whether it fires should be irrelevant, given length.
+flash 1
+
+# Pause Command
+# When a pause time is given, the program must immediately halt execution for the indicated time interval.
+pause 1000
+# Given an ongoing pause of any duration, when the user presses enter, the program should immediately end the pause. 
+pause 1000000
+pause
+
+# Pulse Command
+# When a pulse duration time of at least 300ms is given, the length of a pulse must be equal to the provided value.
+pulse 3000
+pulse 1000
+pulse 10000
+# Intentional error
+pulse 100
+
+# Traffic Command - Interval
+# When a traffic command is provided with an interval parameter of at least 100ms, it should update itself after every interval.
+traffic 200
+traffic 1000
+# Intentional error
+traffic 10
+
+# Traffic Command - Density
+# When a traffic command is provided with a density parameter, it should update its internal logic to ensure that on average, a percentage of LEDs cooresponding to the density parameter are lit. 
+traffic 200 5
+# Potential undesired output: LED array may be fully saturated.
+traffic 200 90
+traffic 200 9.9
+# Stress test of precision; not all digits need to be recorded correctly.
+traffic 200 49.2384378432794732
+# Intentional errors
+traffic 200 0
+traffic 200 100
+
+# Wave Command - Period
+# When a wave command is provided with a period parameter, a wave on the animation should pass every time a period in milliseconds passes. 
+wave 1000
+wave 10000
+wave 100
+# Intentional error
+wave 1
+
+# Wave Command - Wavelength
+# When a wave command is provided with a wavelength parameter, the number of pixels between the two brightest or darkest pixels should be equal to the wavelength. 
+wave 3000 4
+wave 3000 2
+wave 3000 10
+wave 3000 4.9
+wave 3000 12.34567890123456789
+# Intentional errors
+wave 3000 1
+wave 3000 0.9
+
+
+# Color Parameter
+# When a command is run with a color (-c) parameter, it should change the color of the animation AND switch the animation. 
+kill
+on -c red
+alt -c blue
+pulse -c green
+traffic -c blue
+wave -c red
+flash -c white
+
+color white
+
+# Next Parameter
+# When an interrupt is run with a future/next (-n) parameter, the next command should be executed immediately after the interrupt is complete.
+alt
+flash -n kill
+alt
+flash -n on
+alt
+flash -n pulse
+alt
+flash -n traffic
+alt
+flash -n wave
+flash -n pause
+
+kill
+
+# Recursion Parameter
+# Given an interrupt run with a recursion parameter, when the user presses enter but leaves the input empty, the program should re-execute the last executed command. 
+# This is not possible to test using this software. 
+
+# Kill parameter
+# When an interrupt is run with a kill (-k) parameter, the lights should be killed immediately after the interrupt is complete. 
+alt
+flash -k
+wave 
+flash -k
+pulse 
+flash -k
+traffic
+flash -k
+
+# Transition typicals
+on -t 5000
+kill -t 5000
+# Intentional errors: animation is too fast to see. 
+on 10
+kill 10
+
+# Transition Parameter - Transition smoothness
+# When the user enters an animation that does not have an implicit transition parameter, but explicitly gives a transition (-t) parameter, the animation should transition from its current state to the inputted state over the given interval in milliseconds. 
+on -c red
+alt -c blue -t 5000
+pulse -c green -t 5000
+wave -c blue -t 5000
+traffic -c red -t 5000
+kill -c w
+
+# Transition Parameter - color timing consistency
+# Given a timing-based animation, when the user has the color of the animation transition without changing the animation itself, the initial and final animations should remain synced as the color is changed. 
+# These animations are chosen in order of complexity - static, interval, and continuous. 
+on -c white
+color red -t 5000
+alt 
+color blue -t 5000
+wave 
+color green -t 5000

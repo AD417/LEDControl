@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 from datetime import datetime
+import os.path
 
 from rpi_ws281x import PixelStrip
 from aio_stdout import ainput
@@ -10,6 +11,7 @@ from aio_stdout import ainput
 from internals.LED_data import *
 from internals.command.handler import do_my_command
 import internals.Program as Program
+from internals.command.fileloader import load_file
 
 
 # LED strip configuration:
@@ -60,6 +62,17 @@ async def get_input():
                 print("Aborting recursion.")
                 Program.performing_recursion = False
 
+        if full_command == "":
+            if Program.is_paused or Program.is_interrupted:
+                Program.is_paused = False
+                Program.is_interrupted = False
+            elif Program.file_loaded:
+                if len(Program.command_queue) == 0:
+                    Program.is_running = False
+                else:
+                    full_command = Program.command_queue.pop(0)
+            
+
         do_my_command(full_command)
 
 async def led_loop():
@@ -90,10 +103,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-d", "--dry-run",
-        action="store_true"
+        action="store_true",
+        help="Initiate a 'dry run', meaning no data is ever sent to the LEDs."
+    )
+    parser.add_argument(
+        "-e", "--execute",
+        help="The path to a file to execute.",
     )
     args = parser.parse_args()
     dry_run = args.dry_run
+
+    if args.execute:
+        path_to_instructions = os.path.abspath(args.execute)
+        load_file(path_to_instructions)
+
+    # print("\n".join(Program.command_queue))
 
     startup_time = datetime.now()
 

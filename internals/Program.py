@@ -24,3 +24,6 @@ time_to_unpause: datetime = datetime.now()
 
 next_animation: Animation|None = None
 modifying_flash: bool = False
+
+command_queue: list[str] = []
+file_loaded: bool = False
