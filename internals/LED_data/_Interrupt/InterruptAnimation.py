@@ -24,3 +24,14 @@ class InterruptAnimation(Animation):
         Returns: a decimal value between 0 and 1, includive, indicating percentage."""
         time_since_start: timedelta = datetime.now() - self.start_time
         return time_since_start / self.frame_interval
+
+    def __str__(self) -> str:
+        out = ""
+        out += "an Undocumented Interrupt: %r\n" % type(self)
+
+        transition_time_ms = (self.end_time - self.start_time).total_seconds() * 1000
+
+        out += "    This interrupt is %i%% through a %ims Interrupt.\n" \
+                    % (self.interrupt_percentage() * 100, transition_time_ms)
+
+        return out

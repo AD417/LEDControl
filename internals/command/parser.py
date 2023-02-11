@@ -214,6 +214,18 @@ add_required_interval_to(pulse_parser, default_value_ms=3000)
 add_color_to(pulse_parser)
 add_transition_to(pulse_parser)
 
+status_parser = LEDParser(
+    prog="status",
+    description="Display important status information regarding the program",
+    epilog="Are you debugging something? Report bugs to AD417."
+)
+status_parser.add_argument(
+    # TODO: determine if this should be changed to a "count" argument. (eg: -aaaaa)
+    "-a", "--all",
+    action="store_true",
+    help="Whether ALL program information should be displayed, including internal/debug variables."
+)
+
 traffic_parser = LEDParser(
     prog="traffic",
     description="Create a traffic animation, emulating the lights of cars on a distant highway",

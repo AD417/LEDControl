@@ -64,8 +64,11 @@ class TransitionAnimation(Animation):
 
         transition_time_ms = (self.end_time - self.start_time).total_seconds() * 1000
 
-        out += "    This animation is %i%% through the %ims transition.\n" \
-                    % (self.transition_percentage() * 100, transition_time_ms)
+        if self.is_complete():
+            out += "    This animation is complete.\n"
+        else:
+            out += "    This animation is %i%% through the %ims transition.\n" \
+                        % (self.transition_percentage() * 100, transition_time_ms)
 
         return out
         

@@ -12,3 +12,17 @@ class FlashAnimation(InterruptAnimation):
     None"""
     def pixel_state(self: FlashAnimation, pixel_id: int) -> RGB:
         return self.color
+
+    def __str__(self) -> str:
+        out = ""
+        out += "a Flash!\n"
+
+        transition_time_ms = (self.end_time - self.start_time).total_seconds() * 1000
+
+        if self.is_complete():
+            out += "    This flash is complete.\n"
+        else:
+            out += "    This flash is %i%% complete. (Length: %ims)\n" \
+                        % (self.interrupt_percentage() * 100, transition_time_ms)
+
+        return out

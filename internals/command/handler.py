@@ -369,10 +369,39 @@ def pulse_command(parameters: list[str]):
 def status_command(parameters: list[str]):
     """Display the status of the program.\n
     Legal Parameters: 
-    None"""
-    Log.data += "The current animation is "
+    `all`: whether all the data should be displayed."""
+
+    args = status_parser.parse_args(parameters)
+
+    Log.data += "The primary animation is "
     Log.data += str(Program.animation)
+    if Program.is_interrupted:
+        Log.data += "However, it is being interrupted by "
+        Log.data += str(Program.interrupt)
     color_command([])
+
+    if not args.all:
+        return
+    
+    Log.data += "The program is currently%s running\n" % ("" if Program.is_running else " not")
+    Log.data += "The program is currently%s interrupted\n" % ("" if Program.is_interrupted else " not" )
+    if not Program.is_interrupted:
+        Log.data += "The interrupt animation is: "
+        Log.data += str(Program.interrupt)
+
+    Log.data += "The program is currently%s performing recursion\n" % ("" if Program.performing_recursion else " not")
+    Log.data += "The currently loaded recursive command is %r\n" % Program.recursive_command
+    Log.data += "The program is %s paused\n" % ("currently" if Program.is_paused else "not")
+    if Program.is_paused:
+        Log.data += "The program will unpause in %s\n" % (Program.time_to_unpause - datetime.now())
+    
+    if Program.file_loaded:
+        Log.data += "The program has a file loaded; %i commands remain." % len(Program.command_queue)
+    else:
+        Log.data += "The program is not executing a file."
+
+
+
 
 def traffic_command(parameters: list[str]):
     """Generate a animation that simulates headlights on a distant road. \n
