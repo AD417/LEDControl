@@ -47,6 +47,8 @@ def do_my_command(full_command: str|list[str]):
             pause_command(parameters)
         elif command in PULSE:
             pulse_command(parameters)
+        elif command in STATUS:
+            status_command(parameters)
         elif command in TRAFFIC:
             traffic_command(parameters)
         elif command in WAVE:
@@ -174,7 +176,6 @@ def alias_command(parameters: list[str]):
     Log.data += "Alias successfully created!\n"
     Log.data += "Alias: %s\n" % args.alias_name
     Log.data += "Command: %s\n" % " ".join(args.command)
-
 
 def alt_command(parameters: list[str]): 
     """
@@ -365,6 +366,14 @@ def pulse_command(parameters: list[str]):
 
     Program.animation = next_animation
     
+def status_command(parameters: list[str]):
+    """Display the status of the program.\n
+    Legal Parameters: 
+    None"""
+    Log.data += "The current animation is "
+    Log.data += str(Program.animation)
+    color_command([])
+
 def traffic_command(parameters: list[str]):
     """Generate a animation that simulates headlights on a distant road. \n
     Legal Parameters:

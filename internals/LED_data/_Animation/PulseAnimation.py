@@ -18,3 +18,10 @@ class PulseAnimation(Animation):
         frame = self.frame()
         fill_percentage = 0.5 * (1 - math.cos(2 * math.pi * frame))
         return self.dark_led.interpolate(self.color, fill_percentage)
+
+    def __str__(self) -> str:
+        out = ""
+        out += "a Pulsating Animation.\n"
+        out += "    The light pulses on/off every %ims\n" % (self.frame_interval.total_seconds() * 1000)
+
+        return out

@@ -45,3 +45,11 @@ class TrafficAnimation(Animation):
         if self.westbound[pixel_id] or self.eastbound[pixel_id]:
             return self.color
         return self.dark_led
+
+    def __str__(self) -> str:
+        out = ""
+        out += "a Traffic Animation.\n"
+        out += "    The 'cars' in the animation move every %ims.\n" % (self.frame_interval.total_seconds() * 1000)
+        out += "    About %.1f%% of the road is occupied by cars at any given time.\n" % (self.traffic_density * 100)
+        
+        return out

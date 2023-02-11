@@ -17,3 +17,15 @@ class AlternatingAnimation(Animation):
         frame = self.frame()
         if (frame + pixel_id) % self.width == 0: return self.color
         return self.dark_led
+
+    def __str__(self) -> str:
+        ordinal = ""
+        if self.width == 2: ordinal = "nd"
+        elif self.width == 3: ordinal = "rd"
+        else: ordinal = "th"
+        out = ""
+        out += "an Alternating Animation. \n"
+        out += "    Every %i%s pixel is lit.\n" % (self.width, ordinal)
+        out += "    This shifts every %ims\n" % (self.frame_interval.total_seconds() * 1000)
+        
+        return out

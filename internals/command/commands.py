@@ -13,6 +13,7 @@ FILL:           Final[list[str]] = ["fill", "on"]
 KILL:           Final[list[str]] = ["off", "kill"]
 PAUSE:          Final[list[str]] = ["pause"]
 PULSE:          Final[list[str]] = ["pulse"]
+STATUS:         Final[list[str]] = ["status"]
 TRAFFIC:        Final[list[str]] = ["cars", "traffic"]
 WAVE:           Final[list[str]] = ["wave"]
 

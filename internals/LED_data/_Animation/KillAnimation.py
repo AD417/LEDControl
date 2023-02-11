@@ -11,3 +11,9 @@ class KillAnimation(Animation):
     Parameters: None"""
     def pixel_state(self: KillAnimation, pixel_id: int) -> RGB:
         return self.dark_led
+    
+    def __str__(self) -> str:
+        out = ""
+        out += "nothing.\n"
+        
+        return out

@@ -20,3 +20,11 @@ class WaveAnimation(Animation):
         frame = self.frame()
         fill_percentage = 0.5 * (1 - math.cos(2 * math.pi * (frame + pixel_id) / self.wave_length))
         return self.dark_led.interpolate(self.color, fill_percentage)
+
+    def __str__(self) -> str:
+        out = ""
+        out += "a Wave Animation.\n"
+        out += "    Each wave is %.1fpx long.\n" % self.wave_length
+        out += "    The wave moves by 1 pixel every %ims" % (self.frame_interval.total_seconds() * 1000)
+
+        return out

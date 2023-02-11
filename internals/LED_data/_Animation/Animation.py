@@ -51,6 +51,11 @@ class Animation(ABC):
         `pixel_id`: The index of the pixel that we are modifying."""
         pass
 
+    def __str__(self) -> str:
+        """This Animation is..."""
+        out = "an undocumented Animation: %r\n" % type(self)
+        return out
+
 
 if __name__ == "__main__":
     a = Animation(100) # Deliberate TypeError.

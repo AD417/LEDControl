@@ -11,3 +11,9 @@ class FillAnimation(Animation):
     Parameters: None"""
     def pixel_state(self: FillAnimation, pixel_id: int) -> RGB:
         return self.color
+
+    def __str__(self) -> str:
+        out = ""
+        out += "a Fill Animation.\n"
+        
+        return out
