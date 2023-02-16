@@ -24,3 +24,5 @@ time_to_unpause: datetime = datetime.now()
 
 command_queue: list[str] = []
 file_loaded: bool = False
+
+logger: str = ""

@@ -11,7 +11,7 @@ from aio_stdout import ainput
 from internals.LED_data import *
 from internals.command.handler import do_my_command
 import internals.Program as Program
-from internals.command.fileloader import load_file
+from internals.command.fileloader import load_file, load_next_command, file_summary
 
 # LED strip configuration:
 LED_COUNT = 100       # Number of LED pixels.
@@ -70,10 +70,7 @@ async def get_input():
                 Program.is_paused = False
                 Program.is_interrupted = False
             elif Program.file_loaded:
-                if len(Program.command_queue) == 0:
-                    Program.is_running = False
-                else:
-                    full_command = Program.command_queue.pop(0)
+                full_command = load_next_command()
             
 
         do_my_command(full_command)
@@ -126,6 +123,12 @@ if __name__ == "__main__":
 
     welcome_message = "LEDControl v0.2.0\n"
     welcome_message += "Program created by AD417. Software is in BETA: expect bugs!\n"
-    welcome_message += startup_time.strftime("Last login: %a %b %d %H:%M:%S %Y")
+    welcome_message += startup_time.strftime("Last login: %a %b %d %H:%M:%S %Y\n")
+    
+    if args.execute:
+        welcome_message += "\n"
+        welcome_message += "This program is executing " + args.execute + "\n"
+        welcome_message += file_summary()
+
     print(welcome_message)
     asyncio.run(main()) 

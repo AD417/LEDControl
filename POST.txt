@@ -1,6 +1,6 @@
 ### Program Self-Test
 ### 
-### This program is intended to test all core functionality of this program. 
+### This program is intended to test all core functionality of LEDControl. 
 ### Ideally, it should be possible to run the program all the way through without stopping, 
 ### but at times it will be beneficial or necessary to determine if the program's visual output is correct. 
 
@@ -48,8 +48,7 @@ color k
 color d 
 color i 
 
-# When a color command is executed without a parameter, it should fail to run. 
-# Intentional error
+# When a color command is executed without a parameter, it should print out the currently used colors.
 color 
 
 # When a custom color is provided, the program should attempt to parse that color and display it to the LEDs.
@@ -201,9 +200,9 @@ flash -k
 # Transition typicals
 on -t 5000
 kill -t 5000
-# Intentional errors: animation is too fast to see. 
-on 10
-kill 10
+# Potential (ignorable) errors: animation is too fast to see. 
+on -t 10
+kill -t 10
 
 # Transition Parameter - Transition smoothness
 # When the user enters an animation that does not have an implicit transition parameter, but explicitly gives a transition (-t) parameter, the animation should transition from its current state to the inputted state over the given interval in milliseconds. 
@@ -212,6 +211,7 @@ alt -c blue -t 5000
 pulse -c green -t 5000
 wave -c blue -t 5000
 traffic -c red -t 5000
+# Intentional error.
 kill -c w
 
 # Transition Parameter - color timing consistency
@@ -223,3 +223,8 @@ alt
 color blue -t 5000
 wave 
 color green -t 5000
+
+# Final kill command.
+kill
+
+# Fin.
