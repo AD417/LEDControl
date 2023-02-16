@@ -23,6 +23,16 @@ def create_alias(name: str, command: list[str]):
 
     Aliases[name] = command
 
+def display_all() -> str:
+    """Display all known aliases."""
+    data = ""
+    longest_alias = max(len(a) for a in Aliases) + 2
+    for alias, command in Aliases.items():
+        data += (alias + ":").ljust(longest_alias) + " ".join(command) + "\n"
+    
+    return data
+    
+
 def _get_alias_file() -> str:
     """Determine where the aliases are being stored."""
     full_file_path = os.path.dirname(__file__)
@@ -41,7 +51,6 @@ def load_aliases():
             alias_name, command = line.strip(" \n").split(" ", 1)
             create_alias(alias_name, command.split())
 
-
 def save_aliases(): 
     """Save the current alias data to the file."""
 
@@ -54,7 +63,5 @@ def save_aliases():
 
     with open(full_file_path, "w") as f:
         f.write(alias_file_data)
-
-
 
 load_aliases()

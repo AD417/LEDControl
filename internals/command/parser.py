@@ -13,7 +13,6 @@ class LEDParser(ArgumentParser):
             message = ""
         raise ValueError(message)
 
-
 ### "Types" used to cleanly get data from argparse.
 def time(delta: str) -> timedelta:
     """Create a timedelta object from a numerical string argument"""
@@ -220,7 +219,6 @@ status_parser = LEDParser(
     epilog="Are you debugging something? Report bugs to AD417."
 )
 status_parser.add_argument(
-    # TODO: determine if this should be changed to a "count" argument. (eg: -aaaaa)
     "-a", "--all",
     action="store_true",
     help="Whether ALL program information should be displayed, including internal/debug variables."

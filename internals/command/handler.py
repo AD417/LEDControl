@@ -87,7 +87,6 @@ def do_my_command(full_command: str|list[str]):
         print("... ", end="")
     else: 
         print("$ ", end="")
-        
 
 
 def sanitize(command: str) -> list[str]:
@@ -163,8 +162,9 @@ def alias_command(parameters: list[str]):
     `Command`: The command this alias executes. 
     """
     if len(parameters) == 0: 
-        print(Alias.Aliases)
+        Log.data += Alias.display_all()
         return
+
     args = alias_parser.parse_args(parameters)
     
     if args.alias_name == "alias":
@@ -212,7 +212,7 @@ def color_command(parameters: list[str]):
 
     if len(parameters) == 0:
         Log.data += "Current main color:  %s\n" % color_constants.name_from_color(Program.color)
-        Log.data += "Current flash color: %s" % color_constants.name_from_color(Program.flash_color)
+        Log.data += "Current flash color: %s\n" % color_constants.name_from_color(Program.flash_color)
         return
     
     args = color_parser.parse_args(parameters)  
@@ -396,12 +396,9 @@ def status_command(parameters: list[str]):
         Log.data += "The program will unpause in %s\n" % (Program.time_to_unpause - datetime.now())
     
     if Program.file_loaded:
-        Log.data += "The program has a file loaded; %i commands remain." % len(Program.command_queue)
+        Log.data += "The program has a file loaded; %i commands remain.\n" % len(Program.command_queue)
     else:
-        Log.data += "The program is not executing a file."
-
-
-
+        Log.data += "The program is not executing a file.\n"
 
 def traffic_command(parameters: list[str]):
     """Generate a animation that simulates headlights on a distant road. \n

@@ -13,7 +13,6 @@ from internals.command.handler import do_my_command
 import internals.Program as Program
 from internals.command.fileloader import load_file
 
-
 # LED strip configuration:
 LED_COUNT = 100       # Number of LED pixels.
 LED_PIN = 18          # GPIO pin connected to the pixels (18 uses PWM!).
@@ -32,14 +31,16 @@ dry_run = False
 
 async def on_frame():
     ARRAY.update_strip_using(Program.animation)
-    ARRAY.send_output_to(STRIP)
+    if not dry_run: 
+        ARRAY.send_output_to(STRIP)
     if Program.animation.is_complete():
         Program.animation = Program.animation.next_animation()
 
 async def on_interrupt():
     ARRAY.update_strip_using(Program.interrupt)
-    ARRAY.send_output_to(STRIP)
-    
+    if not dry_run:
+        ARRAY.send_output_to(STRIP)
+
     if Program.interrupt.is_complete(): 
         Program.is_interrupted = False
         if Program.performing_next_command:
@@ -49,6 +50,8 @@ async def on_interrupt():
 async def get_input(): 
     print("\n$ ", end="")
     while Program.is_running:
+        if Program.file_loaded:
+            await asyncio.sleep(0.25)
         try:
             full_command = (await ainput()).strip().lower()
         except KeyboardInterrupt: 
@@ -76,8 +79,8 @@ async def get_input():
         do_my_command(full_command)
 
 async def led_loop():
-    if dry_run: return
-    STRIP.begin()
+    if not dry_run:
+        STRIP.begin()
     while Program.is_running: 
         # Yield execution to the get_input asyncio loop, if necessary.
         await asyncio.sleep(0.001)
