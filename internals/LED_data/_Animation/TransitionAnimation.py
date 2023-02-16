@@ -1,7 +1,9 @@
 from __future__ import annotations
+
+from datetime import datetime, timedelta
+
 from .Animation import Animation
 from ..RGB import RGB
-from datetime import datetime, timedelta
 
 class TransitionAnimation(Animation):
     """Temporary, Continuous Animation used to shift between two otherwise incongruent animations in a smooth manner.
@@ -40,3 +42,33 @@ class TransitionAnimation(Animation):
         color1 = self.current_animation.pixel_state(pixel_id)
         color2 = self.future_animation.pixel_state(pixel_id)
         return color1.interpolate(color2, transition_percentage)
+    
+    def __str__(self) -> str:
+        out = ""
+        out += "a Transition Animation.\n"
+        out += "    Currently:"
+
+        current_animation_str = str(self.current_animation)
+        for i, line in enumerate(current_animation_str.splitlines()):
+            if i != 0:
+                out += "    "
+            out += line + "\n"
+        
+        out += "\n    Up next: "
+
+        future_animation_str = str(self.future_animation)
+        for i, line in enumerate(future_animation_str.splitlines()):
+            if i != 0:
+                out += "    "
+            out += line + "\n"
+
+        transition_time_ms = (self.end_time - self.start_time).total_seconds() * 1000
+
+        if self.is_complete():
+            out += "    This animation is complete.\n"
+        else:
+            out += "    This animation is %i%% through the %ims transition.\n" \
+                        % (self.transition_percentage() * 100, transition_time_ms)
+
+        return out
+        

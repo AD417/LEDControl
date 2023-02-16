@@ -1,0 +1,72 @@
+# Chicago Example
+# Demonstation of the program using old commands used in Chicago,
+# and how other commands could be used.
+
+# Make the lights turn on immediately after this!
+flash 800 -k
+
+# Next command cued when the overture ends.
+alt 300 3 -t 2000
+
+# Next commands are the 3 gunshots!
+on -t 3000
+
+# Gunshot 1!
+flash 200 -c red -k
+
+# Gunshot 2!
+flash 200
+
+# Gunshot 3! Next command runs when the music continues!
+flash 200 
+
+# Next command is dramatic close to scene.
+alt 300 3 -c white -t 3000
+
+# Next cue occurs during the Cell Block Tango. A custom flash color must be loaded; press enter please.
+flash 500 -c white -k
+
+# Next cue occurs at the start of the Cell Block tango.
+color custom 70 0 0 
+
+# This command is deliberately sped up for demonstrative purposes. It would also repeat a number of times.
+# Next up: After "Lipshitz", press enter twice.
+alt 1100 2 -t 3000
+
+kill
+
+# Blah blah blah, repeating...
+# Next up: When the music goes up, press enter!
+alt 1100 2 -t 3000
+
+# Next up: When the first verse begins, press enter. 
+color red -t 1000
+
+# Next up: when the monologue is done, press enter.
+kill -t 500
+
+# Repeat this sequence for each girl, except for the Hungarian. We're gonna skip to her. Press enter, allow 1 pulse to occur, and then press enter again. 
+flash 500 -n alt 1100 2
+
+# Press enter after a pulse!
+pulse 800 -c white
+
+# Next cue occurs on the next dramatic flair. 
+kill
+
+# Next cues are the 2 stomps. Should be rapid-fire. 
+flash 500 -n alt 550 3 -c red
+
+flash 100 -c black
+
+# Next up: a kill near the end of the song. 
+flash 100 -c black -n pulse 1000 
+
+# Next up: a quasi-flash. Press enter, then enter again as the applause ramps down. 
+kill -t 5000
+
+# Don't let the lights remain on too long. 
+on
+
+# Next up: Nothing, because I'm too lazy to continue this. 
+kill -t 3000

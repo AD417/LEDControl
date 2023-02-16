@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 
@@ -43,7 +44,6 @@ class RGB():
     def __str__(self: RGB) -> str:
         """Convert the provided RGB color to a hexadecimal representation (eg: #000000)"""
         return f"#{hex(self.r)[2:]:0>2}{hex(self.g)[2:]:0>2}{hex(self.b)[2:]:0>2}"
-
 
 if __name__ == "__main__":
     a = RGB(255,255,255)

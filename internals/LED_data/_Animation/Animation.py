@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from ..RGB import RGB
-from typing import ClassVar
 from dataclasses import dataclass, field
+from typing import ClassVar
+
+from ..RGB import RGB
 
 @dataclass
 class Animation(ABC):
@@ -15,8 +16,8 @@ class Animation(ABC):
     interrupt: ClassVar[bool] = False
 
     color: RGB = field(default=RGB(0,0,0))
-    frame_interval: timedelta = field(default=timedelta())
-    start_time: datetime = field(default_factory=datetime.now, init=False, repr=False)
+    frame_interval: timedelta = field(default=timedelta(seconds=1))
+    start_time: datetime = field(default_factory=datetime.now)
 
     from dataclasses import replace as copy
 
@@ -49,6 +50,11 @@ class Animation(ABC):
         Parameters:
         `pixel_id`: The index of the pixel that we are modifying."""
         pass
+
+    def __str__(self) -> str:
+        """This Animation is..."""
+        out = "an undocumented Animation: %r\n" % type(self)
+        return out
 
 
 if __name__ == "__main__":
