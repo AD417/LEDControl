@@ -1,0 +1,18 @@
+# A test focusing om how the program handles errors in "execution" mode. 
+# Ideally, this program is completely pointless, as a prewritten program should not contain errors. 
+# But, it is useful to ensure that the program outputs data in the correct order in all contexts.
+on
+
+# When a custom color is provided, the program should attempt to parse that color and display it to the LEDs.
+color custom 255 255 255
+color custom 0 0 0
+color custom 255 0 0
+color custom 0 255 0
+color custom 0 0 255
+# When a malformed color command is provided, the program should reject it and print out an error.
+# Intentional errors:
+color custom
+color custom 255
+color custom 255 255
+color custom 300 0 0
+color custom A B C
