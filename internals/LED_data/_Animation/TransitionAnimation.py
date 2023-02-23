@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from .Animation import Animation
-from ..RGB import RGB
-from ..RGBArray import RGBArray
+from ..Components import Animation, RGB, RGBArray
 
 class TransitionAnimation(Animation):
     """Temporary, Continuous Animation used to shift between two otherwise incongruent animations in a smooth manner.

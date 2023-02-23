@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from ..Components import RGB, RGBArray
+from ._RGB import RGB
+from ._RGBArray import RGBArray
 
 @dataclass
 class Animation(ABC):

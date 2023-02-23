@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .Animation import Animation
-from ..RGB import RGB
-from ..RGBArray import RGBArray
+from ..Components import Animation, RGB, RGBArray
 
 @dataclass
 class KillAnimation(Animation):

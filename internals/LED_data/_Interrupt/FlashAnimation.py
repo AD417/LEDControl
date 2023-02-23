@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..Components import RGB, RGBArray
 from .InterruptAnimation import InterruptAnimation
-from ..RGB import RGB
-from ..RGBArray import RGBArray
 
 @dataclass
 class FlashAnimation(InterruptAnimation):

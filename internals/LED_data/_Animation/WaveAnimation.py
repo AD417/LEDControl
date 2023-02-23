@@ -3,9 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from .Animation import Animation
-from ..RGB import RGB
-from ..RGBArray import RGBArray
+from ..Components import Animation, RGB, RGBArray
 
 @dataclass
 class WaveAnimation(Animation):

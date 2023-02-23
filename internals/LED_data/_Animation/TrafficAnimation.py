@@ -4,9 +4,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 import random
 
-from .Animation import Animation
-from ..RGB import RGB
-from ..RGBArray import RGBArray
+from ..Components import Animation, RGB, RGBArray
 
 @dataclass
 class TrafficAnimation(Animation):
