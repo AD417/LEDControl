@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from ..Components import Animation, RGB, RGBArray
+from ..components import Animation, RGB, RGBArray
 
 @dataclass
 class WaveAnimation(Animation):
@@ -33,11 +33,6 @@ class WaveAnimation(Animation):
             strip[pixel] = cache[offset]
 
         return strip
-
-    def pixel_state(self: WaveAnimation, pixel_id: int) -> RGB:
-        frame = self.frame()
-        fill_percentage = 0.5 * (1 - math.cos(2 * math.pi * (frame + pixel_id) / self.wave_length))
-        return self.dark_led.interpolate(self.color, fill_percentage)
 
     def __str__(self) -> str:
         out = ""

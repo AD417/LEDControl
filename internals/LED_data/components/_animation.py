@@ -5,13 +5,13 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from ._RGB import RGB
-from ._RGBArray import RGBArray
+from ._rgb import RGB
+from ._rgb_array import RGBArray
 
 @dataclass
 class Animation(ABC):
     """Abstract Animation class for the creation of animations for an LED array. \n
-    To use, derive this class and override / implement the `Animation.pixel_state(pixel_id)` method."""
+    To use, derive this class and override / implement the `Animation.strip_state(pixel_id)` method."""
     continuum: ClassVar[bool] = False
     dark_led: ClassVar[RGB] = RGB(0,0,0)
     interrupt: ClassVar[bool] = False
@@ -50,13 +50,6 @@ class Animation(ABC):
         """Apply this animation to an RGB array, given the animation type and amount of time since the animation began. \n
         Parameters:
         `strip`: The RGBArray to apply this animation to."""
-        pass
-
-    @abstractmethod
-    def pixel_state(self: Animation, pixel_id: int) -> RGB:
-        """Determine the current state of the given pixel_id, given the animation type and amount of time since the animation began. \n
-        Parameters:
-        `pixel_id`: The index of the pixel that we are modifying."""
         pass
 
     def __str__(self) -> str:

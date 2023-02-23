@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 import random
 
-from ..Components import Animation, RGB, RGBArray
+from ..components import Animation, RGB, RGBArray
 
 @dataclass
 class TrafficAnimation(Animation):
@@ -47,20 +47,6 @@ class TrafficAnimation(Animation):
                 strip[pixel] = self.dark_led
 
         return strip
-
-
-    def pixel_state(self: TrafficAnimation, pixel_id: int) -> RGB:
-        # This is honestly a massive flaw. I want to rewrite the program so the entire strip is passed to the Animation, instead of doing it pixel by pixel. 
-        if pixel_id >= self.road_size: return self.dark_led
-
-        if self.last_updated_frame != self.frame() and pixel_id == 0:
-            self.eastbound = [self.new_car()] + self.eastbound[:-1]
-            self.westbound = self.westbound[1:] + [self.new_car()]
-            self.last_updated_frame = self.frame()
-        
-        if self.westbound[pixel_id] or self.eastbound[pixel_id]:
-            return self.color
-        return self.dark_led
 
     def __str__(self) -> str:
         out = ""

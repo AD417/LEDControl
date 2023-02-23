@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-from ..Components import Animation
+from ..components import Animation
 
 @dataclass
 class InterruptAnimation(Animation):

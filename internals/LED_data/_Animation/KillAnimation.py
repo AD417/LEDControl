@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..Components import Animation, RGB, RGBArray
+from ..components import Animation, RGBArray
 
 @dataclass
 class KillAnimation(Animation):
@@ -15,9 +15,6 @@ class KillAnimation(Animation):
         
         return strip
 
-    def pixel_state(self: KillAnimation, pixel_id: int) -> RGB:
-        return self.dark_led
-    
     def __str__(self) -> str:
         out = ""
         out += "nothing.\n"

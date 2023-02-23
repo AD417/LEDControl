@@ -1,4 +1,4 @@
-from .Components import Animation, RGB, RGBArray
+from .components import Animation, RGB, RGBArray
 
 from ._Animation.AlternatingAnimation import AlternatingAnimation
 from . import color_constants

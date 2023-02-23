@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from .Components import RGB
+from .components import RGB
 
 COLORS = {
     "black": RGB(0, 0, 0),

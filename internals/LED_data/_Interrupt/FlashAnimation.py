@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..Components import RGB, RGBArray
+from ..components import RGB, RGBArray
 from .InterruptAnimation import InterruptAnimation
 
 @dataclass
@@ -15,9 +15,6 @@ class FlashAnimation(InterruptAnimation):
         for pixel in range(strip.size):
             strip[pixel] = self.color
         return strip
-
-    def pixel_state(self: FlashAnimation, pixel_id: int) -> RGB:
-        return self.color
 
     def __str__(self) -> str:
         out = ""

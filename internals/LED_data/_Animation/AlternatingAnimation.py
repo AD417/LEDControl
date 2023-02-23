@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..Components import Animation, RGB, RGBArray
+from ..components import Animation, RGBArray
 
 @dataclass
 class AlternatingAnimation(Animation):
@@ -21,11 +21,6 @@ class AlternatingAnimation(Animation):
                 strip[pixel] = self.dark_led
 
         return strip
-
-    def pixel_state(self: AlternatingAnimation, pixel_id: int) -> RGB:
-        frame = self.frame()
-        if (frame + pixel_id) % self.width == 0: return self.color
-        return self.dark_led
 
     def __str__(self) -> str:
         ordinal = ""

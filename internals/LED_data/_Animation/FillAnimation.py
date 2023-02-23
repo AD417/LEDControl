@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..Components import Animation, RGB, RGBArray
+from ..components import Animation, RGB, RGBArray
 
 @dataclass
 class FillAnimation(Animation):
@@ -14,9 +14,6 @@ class FillAnimation(Animation):
             strip[pixel] = self.color
         
         return strip
-
-    def pixel_state(self: FillAnimation, pixel_id: int) -> RGB:
-        return self.color
 
     def __str__(self) -> str:
         out = ""
