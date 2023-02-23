@@ -30,14 +30,18 @@ STRIP = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRI
 dry_run = False
 
 async def on_frame():
-    ARRAY.update_strip_using(Program.animation)
+    global ARRAY
+    ARRAY = Program.animation.apply_to(ARRAY)
+    # ARRAY.update_strip_using(Program.animation)
     if not dry_run: 
         ARRAY.send_output_to(STRIP)
     if Program.animation.is_complete():
         Program.animation = Program.animation.next_animation()
 
 async def on_interrupt():
-    ARRAY.update_strip_using(Program.interrupt)
+    global ARRAY
+    ARRAY = Program.interrupt.apply_to(ARRAY)
+    # ARRAY.update_strip_using(Program.interrupt)
     if not dry_run:
         ARRAY.send_output_to(STRIP)
 
@@ -76,6 +80,7 @@ async def get_input():
         do_my_command(full_command)
 
 async def led_loop():
+    global ARRAY
     if not dry_run:
         STRIP.begin()
     while Program.is_running: 
@@ -93,8 +98,9 @@ async def led_loop():
         else:
             await on_frame()
 
-    ARRAY.update_strip_using(KillAnimation())
-    ARRAY.send_output_to(STRIP)
+    if not dry_run:
+        ARRAY = KillAnimation().apply_to(ARRAY)
+        ARRAY.send_output_to(STRIP)
 
 async def main():
     await asyncio.gather(led_loop(), get_input())

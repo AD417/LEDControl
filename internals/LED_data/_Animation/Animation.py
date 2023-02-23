@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import ClassVar
 
 from ..RGB import RGB
+from ..RGBArray import RGBArray
 
 @dataclass
 class Animation(ABC):
@@ -43,6 +44,13 @@ class Animation(ABC):
     def next_animation(self: Animation) -> Animation:
         """If this animation is a transition or otherwise temporary, evaluate what animation we should change to when we complete."""
         return self
+
+    @abstractmethod
+    def apply_to(self: Animation, strip: RGBArray):
+        """Apply this animation to an RGB array, given the animation type and amount of time since the animation began. \n
+        Parameters:
+        `strip`: The RGBArray to apply this animation to."""
+        pass
 
     @abstractmethod
     def pixel_state(self: Animation, pixel_id: int) -> RGB:

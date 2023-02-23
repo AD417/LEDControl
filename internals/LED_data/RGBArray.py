@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rpi_ws281x import PixelStrip
 
-from ._Animation.Animation import Animation
+# from ._Animation.Animation import Animation
 from .RGB import RGB
 
 class RGBArray():
@@ -15,9 +15,9 @@ class RGBArray():
         for _ in range(array_length): 
             self._array.append(RGB(0,0,0))
 
-    def update_strip_using(self: RGBArray, animation: Animation):
-        for pixel in range(self.size):
-            self._array[pixel] = animation.pixel_state(pixel)
+    # def update_strip_using(self: RGBArray, animation: Animation):
+    #     for pixel in range(self.size):
+    #         self._array[pixel] = animation.pixel_state(pixel)
 
     def send_output_to(self: RGBArray, strip: PixelStrip, update: bool = True):
         """Send the data from the RGB Array to the pixel_id strip output. \n
@@ -29,8 +29,34 @@ class RGBArray():
             strip.setPixelColor(i, int(self._array[i].gamma_correct()))
         if update: strip.show()
 
+    def blank_copy(self: RGBArray):
+        return RGBArray(self.size)
+        
+    def interpolate(self: RGBArray, other: RGBArray, percentage: float):
+        """
+        Interpolate every LED in a strip between two colors in RGB space. Returns an RGB color. \n
+        Parameters:
+        `self` (the caller): The first strip. This strip will be returned if `percentage` is 0.
+        `other`: The second strip. This strip will be returned if `percentage` is 1. This strip must have the same length as the `self`. 
+        `percentage`: The amount to interpolate between. Must be a decimal between 0 and 1, inclusive.
+        `return`: an RGBArray."""
+        assert self.size == other.size
+        output = self.blank_copy()
+        for pixel in range(self.size):
+            output._array[pixel] = self._array[pixel].interpolate(other._array[pixel], percentage)
+        return output
+
     def __repr__(self: RGBArray) -> str:
         return f"RGBArray({self.size}"
+
+    def __getitem__(self: RGBArray, key: int):
+        if not isinstance(key, int): raise TypeError("Invalid index: %r" % key)
+        return self._array[key]
+
+    def __setitem__(self: RGBArray, key: int, item: RGB):
+        if not isinstance(key, int): raise TypeError("Invalid index: %r" % key)
+        if not isinstance(item, RGB): raise TypeError("Invalid color: %r" % key)
+        self._array[key] = item
 
 if __name__ == "__main__":
     import time

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from .Animation import Animation
 from ..RGB import RGB
+from ..RGBArray import RGBArray
 
 @dataclass
 class AlternatingAnimation(Animation):
@@ -12,6 +13,16 @@ class AlternatingAnimation(Animation):
     `frame_interval`: The amount of time between frames, or movements of the lit LEDs. Default 0.5s. Value must be at least 50ms. 
     `width`: How often a lit pixel appears in the array. Default 3. Minimum 2. If every `X`th LED is lit, then there are `X-1` unlit LEDs between them. """
     width: int = 3
+
+    def apply_to(self: AlternatingAnimation, strip: RGBArray):
+        frame = self.frame()
+        for pixel in range(strip.size):
+            if (pixel + frame) % self.width == 0:
+                strip[pixel] = self.color
+            else:
+                strip[pixel] = self.dark_led
+
+        return strip
 
     def pixel_state(self: AlternatingAnimation, pixel_id: int) -> RGB:
         frame = self.frame()

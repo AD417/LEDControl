@@ -4,12 +4,19 @@ from dataclasses import dataclass
 
 from .InterruptAnimation import InterruptAnimation
 from ..RGB import RGB
+from ..RGBArray import RGBArray
 
 @dataclass
 class FlashAnimation(InterruptAnimation):
     """Interrupting Animation that overrides the LED array to flash a single color for a set interval. \n
     Parameters: 
     None"""
+
+    def apply_to(self: FlashAnimation, strip: RGBArray):
+        for pixel in range(strip.size):
+            strip[pixel] = self.color
+        return strip
+
     def pixel_state(self: FlashAnimation, pixel_id: int) -> RGB:
         return self.color
 

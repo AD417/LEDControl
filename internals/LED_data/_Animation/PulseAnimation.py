@@ -5,6 +5,7 @@ import math
 
 from .Animation import Animation
 from ..RGB import RGB
+from ..RGBArray import RGBArray
 
 @dataclass
 class PulseAnimation(Animation):
@@ -14,6 +15,18 @@ class PulseAnimation(Animation):
     Note: high-frequency pulsing have have adverse effects for people with epilipsy. Usage is not recommended."""
     continuum = True
     
+    def fill_percentage(self: PulseAnimation):
+        """Compute how bright the LEDs should be at this exact moment."""
+        return 0.5 * (1 - math.cos(2 * math.pi * self.frame()))
+
+    def apply_to(self: PulseAnimation, strip: RGBArray):
+        fill_percentage = self.fill_percentage()
+        current_color = self.dark_led.interpolate(self.color, fill_percentage)
+        for pixel in range(strip.size):
+            strip[pixel] = current_color
+
+        return strip
+
     def pixel_state(self: PulseAnimation, pixel_id: int) -> RGB:
         frame = self.frame()
         fill_percentage = 0.5 * (1 - math.cos(2 * math.pi * frame))

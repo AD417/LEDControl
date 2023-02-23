@@ -6,6 +6,7 @@ import random
 
 from .Animation import Animation
 from ..RGB import RGB
+from ..RGBArray import RGBArray
 
 @dataclass
 class TrafficAnimation(Animation):
@@ -32,6 +33,23 @@ class TrafficAnimation(Animation):
         """Use the traffic density to determine if a new car should be spawned at the beginning of a road.
         Returns: a boolean value indicating if a car should be spawned."""
         return random.random() < self.traffic_density
+
+    def apply_to(self: TrafficAnimation, strip: RGBArray):
+        if self.last_updated_frame != self.frame():
+            self.eastbound = [self.new_car()] + self.eastbound[:-1]
+            self.westbound = self.westbound[1:] + [self.new_car()]
+            self.last_updated_frame = self.frame()
+        
+        pixels_to_display = min(self.road_size, strip.size)
+        
+        for pixel in range(pixels_to_display):
+            if self.westbound[pixel] or self.eastbound[pixel]:
+                strip[pixel] = self.color
+            else:
+                strip[pixel] = self.dark_led
+
+        return strip
+
 
     def pixel_state(self: TrafficAnimation, pixel_id: int) -> RGB:
         # This is honestly a massive flaw. I want to rewrite the program so the entire strip is passed to the Animation, instead of doing it pixel by pixel. 

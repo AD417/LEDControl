@@ -20,7 +20,8 @@ class RGB():
         Parameters:
         `self` (the caller): The first color. This color will be returned if `percentage` is 0.
         `other`: The second color. This color will be returned if `percentage` is 1.
-        `percentage`: The amount to interpolate between. Must be a decimal between 0 and 1, inclusive."""
+        `percentage`: The amount to interpolate between. Must be a decimal between 0 and 1, inclusive.
+        `return`: an RGB value."""
         percent = max(min(percent, 1), 0)
         r = round(other.r * percent + self.r * (1 - percent))
         g = round(other.g * percent + self.g * (1 - percent))

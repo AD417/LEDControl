@@ -5,6 +5,7 @@ import math
 
 from .Animation import Animation
 from ..RGB import RGB
+from ..RGBArray import RGBArray
 
 @dataclass
 class WaveAnimation(Animation):
@@ -15,6 +16,25 @@ class WaveAnimation(Animation):
     continuum = True
 
     wave_length: float = 5.0
+
+    def fill_percentage(self: WaveAnimation, offset: float):
+        return 0.5 * (1 - math.cos(2 * math.pi * offset / self.wave_length))
+
+    def apply_to(self: WaveAnimation, strip: RGBArray):
+        # Generally, the wavelength will be a very divisible number; 
+        # no need to do sine a hundred times.
+        cache: dict[float:float] = {}
+
+        frame = self.frame()
+        for pixel in range(strip.size):
+            offset = (pixel + frame) % self.wave_length
+            if offset not in cache:
+                wave_color = self.dark_led.interpolate(self.color, self.fill_percentage(offset))
+                cache[offset] = wave_color
+
+            strip[pixel] = cache[offset]
+
+        return strip
 
     def pixel_state(self: WaveAnimation, pixel_id: int) -> RGB:
         frame = self.frame()

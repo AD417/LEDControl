@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from .Animation import Animation
 from ..RGB import RGB
+from ..RGBArray import RGBArray
 
 class TransitionAnimation(Animation):
     """Temporary, Continuous Animation used to shift between two otherwise incongruent animations in a smooth manner.
@@ -36,6 +37,18 @@ class TransitionAnimation(Animation):
 
     def next_animation(self: TransitionAnimation) -> Animation:
         return self.future_animation
+
+    def apply_to(self: TransitionAnimation, strip: RGBArray):
+        future_strip = strip.blank_copy()
+
+        transition_percentage = self.transition_percentage()
+        self.current_animation.apply_to(strip)
+        self.future_animation.apply_to(future_strip)
+
+        return strip.interpolate(future_strip, transition_percentage)
+
+
+
 
     def pixel_state(self: TransitionAnimation, pixel_id: int) -> RGB:
         transition_percentage = self.transition_percentage()    
