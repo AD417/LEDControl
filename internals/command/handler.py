@@ -230,7 +230,7 @@ def color_command(parameters: list[str]):
         color_name = args.color
 
     if args.flash:
-        next_animation = Program.interrupt.copy()
+        next_animation = Program.animation.copy()
         Program.flash_color = next_color
         Log.data += "Updating the flash color to: %s\n" % color_name
     else:
@@ -244,7 +244,7 @@ def color_command(parameters: list[str]):
         next_animation = transition_parameter(args.transition, next_animation)
 
     if args.flash:
-        Program.interrupt = next_animation
+        Program.animation = next_animation
     else:
         Program.animation = next_animation
 
@@ -295,9 +295,15 @@ def flash_command(parameters: list[str]):
     args = flash_parser.parse_args(parameters)
     
     next_animation = FlashAnimation(
+        transition_time = args.interval,
         color = Program.flash_color,
-        frame_interval = args.interval
+        current_animation = Program.animation,
     )
+
+    # next_animation = FlashAnimation(
+    #     color = Program.flash_color,
+    #     frame_interval = args.interval
+    # )
     
     Log.data += "Flashing the lights!\n"
     Log.data += "Flash time: %ims\n" % (args.interval.total_seconds() * 1000)
@@ -311,7 +317,7 @@ def flash_command(parameters: list[str]):
     else: next_parameter(args.next)
     # print(args.next)
 
-    Program.interrupt = next_animation
+    Program.animation = next_animation
     Program.is_interrupted = True
 
 def kill_command(parameters: list[str]):
@@ -375,9 +381,9 @@ def status_command(parameters: list[str]):
 
     Log.data += "The primary animation is "
     Log.data += str(Program.animation)
-    if Program.is_interrupted:
-        Log.data += "However, it is being interrupted by "
-        Log.data += str(Program.interrupt)
+    # if Program.is_interrupted:
+    #     Log.data += "However, it is being interrupted by "
+    #     Log.data += str(Program.interrupt)
     color_command([])
 
     if not args.all:
@@ -385,9 +391,9 @@ def status_command(parameters: list[str]):
     
     Log.data += "The program is currently%s running\n" % ("" if Program.is_running else " not")
     Log.data += "The program is currently%s interrupted\n" % ("" if Program.is_interrupted else " not" )
-    if not Program.is_interrupted:
-        Log.data += "The interrupt animation is: "
-        Log.data += str(Program.interrupt)
+    # if not Program.is_interrupted:
+    #     Log.data += "The interrupt animation is: "
+    #     Log.data += str(Program.interrupt)
 
     Log.data += "The program is currently%s performing recursion\n" % ("" if Program.performing_recursion else " not")
     Log.data += "The currently loaded recursive command is %r\n" % Program.recursive_command

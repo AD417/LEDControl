@@ -40,13 +40,14 @@ async def on_frame():
 
 async def on_interrupt():
     global ARRAY
-    ARRAY = Program.interrupt.apply_to(ARRAY)
+    ARRAY = Program.animation.apply_to(ARRAY)
     # ARRAY.update_strip_using(Program.interrupt)
     if not dry_run:
         ARRAY.send_output_to(STRIP)
 
-    if Program.interrupt.is_complete(): 
+    if Program.animation.is_complete(): 
         Program.is_interrupted = False
+        Program.animation = Program.animation.next_animation()
         if Program.performing_next_command:
             Program.performing_next_command = False
             do_my_command(Program.next_command)
@@ -70,9 +71,11 @@ async def get_input():
                 Program.performing_recursion = False
 
         if full_command == "":
-            if Program.is_paused or Program.is_interrupted:
+            if Program.is_paused:
                 Program.is_paused = False
+            elif Program.is_interrupted:
                 Program.is_interrupted = False
+                Program.animation = Program.animation.next_animation()
             elif Program.file_loaded:
                 full_command = load_next_command()
             

@@ -17,6 +17,7 @@ class DeltaAnimation(Animation):
             self: DeltaAnimation, 
             transition_time: timedelta, 
             current_animation: Animation, 
+            interrupt_animation: Animation,
             future_animation: Animation
     ):
 
@@ -24,7 +25,10 @@ class DeltaAnimation(Animation):
         self.transition_time: timedelta = transition_time
         self.end_time: datetime = self.start_time + transition_time
         self.current_animation: Animation = current_animation
+        self.interrupt_animation: Animation = interrupt_animation
         self.future_animation: Animation = future_animation
+
+        self.stop_now = False
 
     def update_color_to(self: DeltaAnimation, color: RGB):
         # We only need to update the future color!
@@ -37,24 +41,30 @@ class DeltaAnimation(Animation):
         return time_since_start / self.transition_time
 
     def is_complete(self: DeltaAnimation) -> bool:
-        return datetime.now() > self.end_time
+        return self.stop_now or datetime.now() > self.end_time
+
+    def abort(self: DeltaAnimation) -> None:
+        self.stop_now = True
 
     def next_animation(self: DeltaAnimation) -> Animation:
         return self.future_animation
 
     def apply_to(self: DeltaAnimation, strip: RGBArray):
+        interrupt_strip = strip.blank_copy()
         future_strip = strip.blank_copy()
 
-        transition_percentage = self.transition_percentage()
         self.current_animation.apply_to(strip)
+        self.interrupt_animation.apply_to(interrupt_strip)
         self.future_animation.apply_to(future_strip)
 
-        return self.blend_strips(strip, future_strip, transition_percentage)
+        transition_percentage = self.transition_percentage()
+        return self.blend_strips(strip, interrupt_strip, future_strip, transition_percentage)
 
     @abstractmethod
     def blend_strips(
             self: DeltaAnimation, 
             current_strip: RGBArray, 
+            interrupt_strip: RGBArray,
             future_strip: RGBArray, 
             transition_percentage: float
     ) -> RGBArray:
@@ -62,6 +72,7 @@ class DeltaAnimation(Animation):
         Parameters:
         `self`: The animation in use.
         `current_strip`: The current strip. This was the animation present before the delta began.
+        `interrupt_strip`: The Interrupt strip. This animation influences how the animations interact. 
         `future_strip`: The future strip. This is the animation that will occur after this delta completes."""
         pass
     

@@ -12,7 +12,7 @@ animation: Animation = KillAnimation()
 
 color: RGB = RGB(255,255,255)
 is_interrupted: bool = False
-interrupt: InterruptAnimation = FlashAnimation()
+# interrupt: InterruptAnimation = FlashAnimation()
 
 flash_color: RGB = RGB(255,255,255)
 performing_recursion: bool = False
