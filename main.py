@@ -8,11 +8,13 @@ import os.path
 from rpi_ws281x import PixelStrip
 from aio_stdout import ainput
 
+from internals.command.fileloader import load_file, load_next_command, file_summary
 from internals.LED_data import *
+import internals.ArrayHandler as ArrayHandler
 from internals.command.handler import do_my_command
 import internals.Program as Program
-from internals.command.fileloader import load_file, load_next_command, file_summary
 
+'''
 # LED strip configuration:
 LED_COUNT = 100       # Number of LED pixels.
 LED_PIN = 18          # GPIO pin connected to the pixels (18 uses PWM!).
@@ -26,23 +28,22 @@ LED_CHANNEL = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 ARRAY = RGBArray(LED_COUNT)
 
 STRIP = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
-
 dry_run = False
 
 async def on_frame():
-    global ARRAY
-    ARRAY = Program.animation.apply_to(ARRAY)
-    # ARRAY.update_strip_using(Program.animation)
-    if not dry_run: 
-        ARRAY.send_output_to(STRIP)
+    """Updates that occur on every frame."""
+    if not Program.dry_run:
+        ArrayHandler.update()
     if Program.animation.is_complete():
         Program.animation = Program.animation.next_animation()
+'''
 
-async def on_interrupt():
-    global ARRAY
+def on_interrupt():
+    # TODO: Determine if we can completely remove this code, and integrate it into onframe. 
+    global ARRAY, STRIP
     ARRAY = Program.animation.apply_to(ARRAY)
     # ARRAY.update_strip_using(Program.interrupt)
-    if not dry_run:
+    if not Program.dry_run:
         ARRAY.send_output_to(STRIP)
 
     if Program.animation.is_complete(): 
@@ -83,12 +84,10 @@ async def get_input():
         do_my_command(full_command)
 
 async def led_loop():
-    global ARRAY
-    if not dry_run:
-        STRIP.begin()
+    ArrayHandler.begin()
     while Program.is_running: 
         # Yield execution to the get_input asyncio loop, if necessary.
-        await asyncio.sleep(0.001)
+        await asyncio.sleep(0)
         if Program.is_paused: 
             if datetime.now() > Program.time_to_unpause:
                 Program.is_paused = False
@@ -97,13 +96,11 @@ async def led_loop():
             else:
                 continue
         if Program.is_interrupted:
-            await on_interrupt()
+            on_interrupt()
         else:
-            await on_frame()
+            ArrayHandler.update()
 
-    if not dry_run:
-        ARRAY = KillAnimation().apply_to(ARRAY)
-        ARRAY.send_output_to(STRIP)
+    ArrayHandler.end()
 
 async def main():
     await asyncio.gather(led_loop(), get_input())
@@ -120,7 +117,7 @@ if __name__ == "__main__":
         help="The path to a file to execute.",
     )
     args = parser.parse_args()
-    dry_run = args.dry_run
+    Program.dry_run = args.dry_run
 
     if args.execute:
         path_to_instructions = os.path.abspath(args.execute)

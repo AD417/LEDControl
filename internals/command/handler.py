@@ -43,6 +43,8 @@ def do_my_command(full_command: str|list[str]):
             fill_command(parameters)
         elif command in KILL:
             kill_command(parameters)
+        elif command in OUT_STATE:
+            out_state_command(parameters)
         elif command in PAUSE:
             pause_command(parameters)
         elif command in PULSE:
@@ -101,7 +103,7 @@ def sanitize(command: str) -> list[str]:
     return command.split()
 
 def validate(value: int|float|timedelta, lower: int, higher: int | None = None):
-    """Evaluates if a value is within a given range.
+    """Evaluates if a value is within a given range. Bounds are inclusive.
     Parameters: 
     `value`: The value to check
     `lower`: The lower bound of acceptable values. Required.
@@ -333,6 +335,35 @@ def kill_command(parameters: list[str]):
     next_animation = transition_parameter(args.transition, next_animation)
 
     Program.animation = next_animation
+
+def out_state_command(parameters: list[str]):
+    """Update the strips being used for output, to change which LED Array is being processed. \n
+    Legal Parameters:
+    `state`: The new state for LEDs to be turned on using. \n
+    1 (001) = Left array only \n
+    2 (010) = Middle array only \n
+    3 (011) = Left + Middle \n
+    4 (100) = Right array only \n
+    ... \n
+    0 (000) = Other (Fireworks)"""
+    args = out_state_parser.parse_args(parameters)
+
+    validate(args.state, 0, 7)
+
+    left =   (args.state & 0b001) > 0
+    middle = (args.state & 0b010) > 0
+    right =  (args.state & 0b100) > 0
+
+    fireworks = args.state == 0
+
+    Log.data += "Changing active LED Strips!\n"
+    Log.data += "New Status:\n"
+    Log.data += "    Left area:   %s\n" % ("ON" if left else "OFF")
+    Log.data += "    Middle area: %s\n" % ("ON" if middle else "OFF")
+    Log.data += "    Right area:  %s\n" % ("ON" if right else "OFF")
+    Log.data += "    Fireworks:   %s\n" % ("ON" if fireworks else "OFF")
+
+    Program.active_strips = args.state
 
 def pause_command(parameters: list[str]):
     """INTERRUPT: Halt all execution. This halt may be either indefinite or for a set interval, based on supplied parameters.

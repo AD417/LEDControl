@@ -5,9 +5,8 @@ from datetime import datetime
 
 from .LED_data import *
 
-# Whether the program is running.
+dry_run: bool = False
 is_running: bool = True
-# The current animation used by the strip
 animation: Animation = KillAnimation()
 
 color: RGB = RGB(255,255,255)
@@ -21,6 +20,9 @@ performing_next_command: bool = False
 next_command: str = ""
 is_paused: bool = False
 time_to_unpause: datetime = datetime.now()
+
+# The active strips. 1-7 are all binary for the shops; 0 is for fireworks. 
+active_strips: int = 7
 
 command_queue: list[str] = []
 file_loaded: bool = False

@@ -20,17 +20,18 @@ class RGBArray():
         Parameters: 
         `strip`: The rpi_ws281x PixelStrip we are putting the data in.
         `update`: Whether the PixelStrip should immediately update after this operation."""
-        assert self.size >= strip.numPixels()
-        for i in range(strip.numPixels()):
+        pixels_updated = max(self.size, strip.numPixels())
+        for i in range(pixels_updated):
             strip.setPixelColor(i, int(self._array[i].gamma_correct()))
         if update: strip.show()
 
     def blank_copy(self: RGBArray):
+        """Create a copy of this array with the same length as this one, but with no LED data."""
         return RGBArray(self.size)
         
     def interpolate(self: RGBArray, other: RGBArray, percentage: float):
         """
-        Interpolate every LED in a strip between two colors in RGB space. Returns an RGB color. \n
+        Interpolate every LED in a strip between two colors in RGB space. Returns nothing. \n
         Parameters:
         `self` (the caller): The first strip. This strip will be returned if `percentage` is 0.
         `other`: The second strip. This strip will be returned if `percentage` is 1. This strip must have the same length as the `self`. 
