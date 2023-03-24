@@ -37,10 +37,12 @@ def do_my_command(full_command: str|list[str]):
             echo_command(parameters)
         elif command in EXIT:
             exit_command(parameters)
-        elif command in FLASH:
-            flash_command(parameters)
         elif command in FILL:
             fill_command(parameters)
+        elif command in FIREWORKS:
+            fireworks_command(parameters)
+        elif command in FLASH:
+            flash_command(parameters)
         elif command in KILL:
             kill_command(parameters)
         elif command in OUT_STATE:
@@ -146,6 +148,8 @@ def out_state_parameter(state: int | None):
         Log.data += "Setting strips (%s) to be on!\n" % bin(state)[2:].zfill(3)
     else:
         Log.data += "Setting the fireworks to be on!\n"
+
+    Program.active_strips = state
 
 def transition_parameter(transition_time: timedelta | None, next_animation: Animation) -> Animation:
     """Set the amount of time that it will take for the program to transition, if necessary. """
@@ -303,7 +307,9 @@ def fill_command(parameters: list[str]):
     
 def fireworks_command(parameters: list[str]):
     """Set the fireworks to be enabled. """
-    ...
+    Log.data += "Look at the fireworks fly!"
+    out_state_parameter(0)
+    Program.animation = FireworkAnimation(color=RGB(255,255,255), frame_interval=timedelta(30))
 
 def flash_command(parameters: list[str]):
     """INTERRUPT: Override the current state of the lights and flash a color. This color may be different from the base color used by the rest of the program.\n

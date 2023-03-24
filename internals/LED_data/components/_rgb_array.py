@@ -20,7 +20,7 @@ class RGBArray():
         Parameters: 
         `strip`: The rpi_ws281x PixelStrip we are putting the data in.
         `update`: Whether the PixelStrip should immediately update after this operation."""
-        pixels_updated = max(self.size, strip.numPixels())
+        pixels_updated = min(self.size, strip.numPixels())
         for i in range(pixels_updated):
             strip.setPixelColor(i, int(self._array[i].gamma_correct()))
         if update: strip.show()

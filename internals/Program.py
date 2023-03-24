@@ -7,7 +7,8 @@ from .LED_data import *
 
 dry_run: bool = False
 is_running: bool = True
-animation: Animation = FireworkAnimation(color=RGB(255,255,255), frame_interval=timedelta(milliseconds=50))
+animation: Animation = KillAnimation() 
+# FireworkAnimation(color=RGB(255,255,255), frame_interval=timedelta(milliseconds=50))
 
 color: RGB = RGB(255,255,255)
 is_interrupted: bool = False

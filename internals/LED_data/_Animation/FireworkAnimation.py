@@ -26,11 +26,11 @@ class FireworkAnimation(Animation):
     continuum = True
     fireworks: list[Firework] = field(
         init=False, 
-        default_factory=lambda: [FireworkAnimation.Firework(0, RGB(255,255,255))]
+        default_factory=lambda: []
     )
 
     def __post_init__(self: FireworkAnimation):
-        self.fireworks.
+        self.fireworks.append(self.Firework(0, RGB.random_bright()))
 
     def generate_new_firework(self: FireworkAnimation):
         frame = self.frame()
@@ -58,12 +58,11 @@ class FireworkAnimation(Animation):
         self.update_fireworks()
 
         frame = self.frame()
-        print()
         for firework in self.fireworks:
             absolute_position = frame - firework.birth_frame
             for i in range(int(firework.tail_length)):
                 pixel_position = int(absolute_position - i)
-                if pixel_position >= strip.size: continue
+                if pixel_position >= strip.size or pixel_position < 0: continue
                 
                 percent_dark = i / firework.tail_length
                 pixel_color = firework.color.interpolate(self.dark_led, percent_dark)

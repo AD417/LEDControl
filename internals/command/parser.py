@@ -175,6 +175,16 @@ add_transition_to(color_parser)
 
 # Exit has no parameters, and the existence of parameter is completely irrelevant. 
 
+fill_parser = LEDParser(
+    prog="fill",
+    description="Make the lights all turn on to a single value",
+)
+add_color_to(fill_parser)
+add_strips_to(fill_parser)
+add_transition_to(fill_parser)
+
+# Fireworks has no parameters. 
+
 flash_parser = LEDParser(
     prog="flash",
     description="Make the lights flash for a brief interval before resuming the previous command",
@@ -185,16 +195,8 @@ add_strips_to(flash_parser)
 flash_parser_futures = flash_parser.add_mutually_exclusive_group()
 add_future_to(flash_parser_futures)
 add_kill_to(flash_parser_futures)
-
 add_recursion_to(flash_parser)
 
-fill_parser = LEDParser(
-    prog="fill",
-    description="Make the lights all turn on to a single value",
-)
-add_color_to(fill_parser)
-add_strips_to(fill_parser)
-add_transition_to(fill_parser)
 
 kill_parser = LEDParser(
     prog="kill",

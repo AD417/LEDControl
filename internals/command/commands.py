@@ -18,11 +18,3 @@ PULSE:          Final[list[str]] = ["pulse"]
 STATUS:         Final[list[str]] = ["status"]
 TRAFFIC:        Final[list[str]] = ["cars", "traffic"]
 WAVE:           Final[list[str]] = ["wave"]
-
-COLOR_PARAMETER:        Final[str] = "-c"
-ECHO_PARAMETER:         Final[str] = "#"
-FUTURE_PARAMETER:       Final[str] = "-n"
-KILL_PARAMETER:         Final[str] = "-k"
-PAUSE_PARAMETER:        Final[str] = "-p"
-RECURSION_PARAMETER:    Final[str] = "-e"
-TRANSITION_PARAMETER:   Final[str] = "-t"
