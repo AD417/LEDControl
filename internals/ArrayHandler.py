@@ -32,12 +32,12 @@ def from_pin(pin: int, is_strip: bool) -> PixelStrip:
     )
 
 strips: dict[str, PixelStrip] = {
-    "left_strip": from_pin(10, True),
-    "middle_strip": from_pin(12, True),
-    "right_strip": from_pin(13, True),
+    "left_strip": from_pin(18, True),
+    "middle_strip": from_pin(13, True),
+    "right_strip": from_pin(21, True), # 13 and 19 are the same?
 
     # XXX: Incorrectly allocated. FIX THIS!
-    # "left_firework": from_pin(999, False),
+    "fireworks": from_pin(10, False),
     # "middle_firework": from_pin(999, False),
     # "right_firework": from_pin(999, False),
 }
@@ -48,8 +48,10 @@ def begin():
     Must be called before any updates can occur.
     """
     if Program.dry_run: return
-    for strip_name in strips:
-        strips[strip_name].begin()
+    strips["left_strip"].begin()
+    strips["middle_strip"].begin()
+    strips["right_strip"].begin()
+    strips["fireworks"].begin()
     
 def end():
     """Turn off all of the LED Arrays. Only to be used when the program is terminating!"""
@@ -76,7 +78,7 @@ def update():
     fireworks = Program.active_strips & 0b111 == 0
 
     array = RGBArray(100)
-    Program.animation.apply_to(array)
+    array = Program.animation.apply_to(array)
 
     # XXX: arrays that are not enabled will not be updated! Pixels may be left on!
     if left:
@@ -95,11 +97,9 @@ def update():
         RGBArray(100).send_output_to(strips["right_strip"])
     strips["right_strip"].show()
     
-    return 
+
     if fireworks:
-        array.send_output_to(strips["left_firework"])
-        strips["left_firework"].show()
-        array.send_output_to(strips["middle_firework"])
-        strips["middle_firework"].show()
-        array.send_output_to(strips["right_firework"])
-        strips["right_firework"].show()
+        array.send_output_to(strips["fireworks"])
+    else:
+        RGBArray(100).send_output_to(strips["fireworks"])
+    strips["fireworks"].show()

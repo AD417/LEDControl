@@ -138,6 +138,15 @@ def color_parameter(color: RGB | None, next_animation: Animation, is_flash: bool
         next_animation.update_color_to(color)
     return next_animation
 
+def out_state_parameter(state: int | None):
+    if state is None: return
+    validate(state, 0, 7)
+
+    if state != 0:
+        Log.data += "Setting strips (%s) to be on!\n" % bin(state)[2:].zfill(3)
+    else:
+        Log.data += "Setting the fireworks to be on!\n"
+
 def transition_parameter(transition_time: timedelta | None, next_animation: Animation) -> Animation:
     """Set the amount of time that it will take for the program to transition, if necessary. """
     if transition_time:
@@ -201,6 +210,7 @@ def alt_command(parameters: list[str]):
     Log.data += "1 in %i LEDs are lit\n" % args.width
     
     next_animation = color_parameter(args.color, next_animation)
+    out_state_parameter(args.out)
     next_animation = transition_parameter(args.transition, next_animation)
     
     Program.animation = next_animation
@@ -286,10 +296,15 @@ def fill_command(parameters: list[str]):
     Log.data += "Lights on!\n"
     
     next_animation = color_parameter(args.color, next_animation)
+    out_state_parameter(args.out)
     next_animation = transition_parameter(args.transition, next_animation)
 
     Program.animation = next_animation
     
+def fireworks_command(parameters: list[str]):
+    """Set the fireworks to be enabled. """
+    ...
+
 def flash_command(parameters: list[str]):
     """INTERRUPT: Override the current state of the lights and flash a color. This color may be different from the base color used by the rest of the program.\n
     Legal Parameters:
@@ -311,6 +326,7 @@ def flash_command(parameters: list[str]):
     Log.data += "Flash time: %ims\n" % (args.interval.total_seconds() * 1000)
 
     next_animation = color_parameter(args.color, next_animation, is_flash=True)
+    out_state_parameter(args.out)
 
     if args.recursive:
         Program.performing_recursion = True
@@ -399,6 +415,7 @@ def pulse_command(parameters: list[str]):
     Log.data += "Pulse interval: %ims\n" % (args.interval.total_seconds() * 1000)
     
     next_animation = color_parameter(args.color, next_animation)
+    out_state_parameter(args.out)
     next_animation = transition_parameter(args.transition, next_animation)
 
     Program.animation = next_animation
@@ -422,16 +439,18 @@ def status_command(parameters: list[str]):
     
     Log.data += "The program is currently%s running\n" % ("" if Program.is_running else " not")
     Log.data += "The program is currently%s interrupted\n" % ("" if Program.is_interrupted else " not" )
-    # if not Program.is_interrupted:
-    #     Log.data += "The interrupt animation is: "
-    #     Log.data += str(Program.interrupt)
+    
+    Log.data += "Current strip output state is %s\n" % bin(Program.active_strips)[2:].zfill(3)
 
     Log.data += "The program is currently%s performing recursion\n" % ("" if Program.performing_recursion else " not")
     Log.data += "The currently loaded recursive command is %r\n" % Program.recursive_command
     Log.data += "The program is %s paused\n" % ("currently" if Program.is_paused else "not")
     if Program.is_paused:
-        Log.data += "The program will unpause in %s\n" % (Program.time_to_unpause - datetime.now())
+        Log.data += "    The program will unpause in %s\n" % (Program.time_to_unpause - datetime.now())
     
+    if Program.dry_run:
+        Log.data += "The program is not actually outputting anything; it is a dry run.\n"
+
     if Program.file_loaded:
         Log.data += "The program has a file loaded; %i commands remain.\n" % len(Program.command_queue)
     else:
@@ -459,6 +478,7 @@ def traffic_command(parameters: list[str]):
     Log.data += "About %.2f%% of the road has cars on it\n" % args.density
     
     next_animation = color_parameter(args.color, next_animation)
+    out_state_parameter(args.out)
     next_animation = transition_parameter(args.transition, next_animation)
 
     Program.animation = next_animation
@@ -484,6 +504,7 @@ def wave_command(parameters: list[str]):
     Log.data += "The wave is %.2fpx long\n" % args.width 
     
     next_animation = color_parameter(args.color, next_animation)
+    out_state_parameter(args.out)
     next_animation = transition_parameter(args.transition, next_animation)
     
     Program.animation = next_animation

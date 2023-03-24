@@ -69,7 +69,7 @@ def add_recursion_to(parser: LEDParser):
 
 def add_strips_to(parser: LEDParser):
     parser.add_argument(
-        "-o", "--out-strip",
+        "-o", "--out",
         type=int,
         metavar="ACTIVE_STRIPS",
         help="The strips that should be enabled for this animation"

@@ -38,6 +38,6 @@ class WaveAnimation(Animation):
         out = ""
         out += "a Wave Animation.\n"
         out += "    Each wave is %.1fpx long.\n" % self.wave_length
-        out += "    The wave moves by 1 pixel every %ims" % (self.frame_interval.total_seconds() * 1000)
+        out += "    The wave moves by 1 pixel every %ims\n" % (self.frame_interval.total_seconds() * 1000)
 
         return out

@@ -1,6 +1,7 @@
 from .components import Animation, RGB, RGBArray
 
 from ._Animation.AlternatingAnimation import AlternatingAnimation
+from ._Animation.FireworkAnimation import FireworkAnimation
 from . import color_constants
 from ._Animation.FillAnimation import FillAnimation
 from ._Animation.FlashAnimation import FlashAnimation

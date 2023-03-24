@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import random
 from dataclasses import dataclass
 
 @dataclass
@@ -13,6 +14,13 @@ class RGB():
     r: int
     g: int
     b: int
+
+    def brighten(self: RGB) -> RGB:
+        factor = 255.0 / max(self.r, self.g, self.b)
+        r = int(self.r * factor)
+        g = int(self.g * factor)
+        b = int(self.b * factor)
+        return RGB(r, g, b)
 
     def interpolate(self: RGB, other: RGB, percent: float) -> RGB:
         """
@@ -45,8 +53,53 @@ class RGB():
     def __str__(self: RGB) -> str:
         """Convert the provided RGB color to a hexadecimal representation (eg: #000000)"""
         return f"#{hex(self.r)[2:]:0>2}{hex(self.g)[2:]:0>2}{hex(self.b)[2:]:0>2}"
+    
+
+    # Class methods
+    def random() -> RGB:
+        """Generate a random color in RGB space."""
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        return RGB(r,g,b)
+
+    def random_bright() -> RGB:
+        """
+        Return a random "fullbright" color. Equivalent to a HSV(random, 1, 1). \n
+        Adapted from colorsys.py:
+        https://github.com/python/cpython/blob/3.11/Lib/colorsys.py
+        """
+        hue = random.random()
+
+        r = int(255 * (0.5 + 0.5 * math.cos(2 * math.pi * (hue))))
+        b = int(255 * (0.5 + 0.5 * math.cos(2 * math.pi * (hue + 1/3))))
+        g = int(255 * (0.5 + 0.5 * math.cos(2 * math.pi * (hue + 2/3))))
+        """
+        sector = int(hue * 6)
+        sector_decimal = hue * 6 - sector
+
+        v = 255
+        p = 0
+        q = int(v * (1 - sector_decimal))
+        t = int(v * sector_decimal)
+
+        r,g,b = 0,0,0
+        if sector == 0:
+            r,g,b = v, t, p
+        if sector == 1:
+            r,g,b = q, v, p
+        if sector == 2:
+            r,g,b = p, v, t
+        if sector == 3:
+            r,g,b = p, q, v
+        if sector == 4:
+            r,g,b = t, p, v
+        if sector == 5:
+            r,g,b = v, p, q
+            """
+        
+        return RGB(r,g,b)
 
 if __name__ == "__main__":
-    a = RGB(255,255,255)
-    print(int(a))
-    print(str(a))
+    for i in range(10):
+        print(RGB.random_bright())
