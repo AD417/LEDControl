@@ -32,11 +32,14 @@ class FireworkAnimation(Animation):
     def __post_init__(self: FireworkAnimation):
         self.fireworks.append(self.Firework(0, RGB.random_bright()))
 
+    def reset(self: FireworkAnimation):
+        self.fireworks = [self.Firework(0, RGB.random_bright())]
+
     def generate_new_firework(self: FireworkAnimation):
         frame = self.frame()
 
         last_firework = self.fireworks[-1]
-        probability_of_new_firework = (frame - (last_firework.birth_frame + last_firework.tail_length + 15)) / 10
+        probability_of_new_firework = (frame - (last_firework.birth_frame + last_firework.tail_length + 25)) / 10
         # TODO: Figure out how to make the logic work exponentially. Or just chain the fireworks together. 
         if probability_of_new_firework > random.random():
             self.fireworks.append(self.Firework(

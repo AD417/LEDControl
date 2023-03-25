@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from . import Alias
-from .. import Program
+from .. import Program, ArrayHandler
 from .commands import *
 from .parser import *
 from ..LED_data import *
@@ -307,8 +307,9 @@ def fill_command(parameters: list[str]):
     
 def fireworks_command(parameters: list[str]):
     """Set the fireworks to be enabled. """
-    Log.data += "Look at the fireworks fly!"
+    Log.data += "Look at the fireworks fly!\n"
     out_state_parameter(0)
+    ArrayHandler.reset_fireworks()
     Program.animation = FireworkAnimation(color=RGB(255,255,255), frame_interval=timedelta(30))
 
 def flash_command(parameters: list[str]):

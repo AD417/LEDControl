@@ -42,6 +42,13 @@ class RGBArray():
         for pixel in range(self.size):
             output._array[pixel] = self._array[pixel].interpolate(other._array[pixel], percentage)
         return output
+    
+    def mask(self: RGBArray, start_index: int, end_index: int):
+        if start_index > end_index: start_index, end_index = end_index, start_index
+        if start_index > self.size or end_index < 0: return
+        for i in range(start_index, end_index):
+            self._array[i] = RGB(0,0,0)
+
 
     def __repr__(self: RGBArray) -> str:
         return f"RGBArray({self.size}"

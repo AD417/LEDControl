@@ -87,7 +87,7 @@ async def led_loop():
     ArrayHandler.begin()
     while Program.is_running: 
         # Yield execution to the get_input asyncio loop, if necessary.
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.05) # 20fps should be fast enough. 
         if Program.is_paused: 
             if datetime.now() > Program.time_to_unpause:
                 Program.is_paused = False
@@ -95,10 +95,8 @@ async def led_loop():
                     do_my_command(Program.next_command)
             else:
                 continue
-        if Program.is_interrupted:
-            on_interrupt()
-        else:
-            ArrayHandler.update()
+        
+        ArrayHandler.update()
 
     ArrayHandler.end()
 
