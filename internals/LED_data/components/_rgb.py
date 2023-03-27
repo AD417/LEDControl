@@ -15,6 +15,8 @@ class RGB():
     g: int
     b: int
 
+    from dataclasses import replace as copy
+
     def brighten(self: RGB) -> RGB:
         factor = 255.0 / max(self.r, self.g, self.b)
         r = int(self.r * factor)
@@ -48,7 +50,7 @@ class RGB():
     def __int__(self: RGB) -> int:
         """Convert the provided RGB color to a 24-bit color value. Conversion for the rpi_ws281x library."""
         # Yeah, yeah, it's RBG and not RGB. For some reason, B and G are swapped on my LEDs.
-        return (self.r << 16) | (self.b << 8) | self.g
+        return (self.r << 16) | (self.g << 8) | self.b
 
     def __str__(self: RGB) -> str:
         """Convert the provided RGB color to a hexadecimal representation (eg: #000000)"""

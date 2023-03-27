@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import ClassVar
 # from datetime import datetime
 import random
 
@@ -19,23 +20,45 @@ class FireworkAnimation(Animation):
         def _random_tail_length():
             return 10 + 15 * random.random()
         
+        def _set_color(self: FireworkAnimation.Firework):
+            self.color = self.explosion_color.copy().interpolate(
+                    RGB(255, 255, 255), 0.6 + 0.4 * random.random()
+            )
+        
         birth_frame: float
-        color: RGB = RGB(255,255,255)
+        explosion_color: RGB = RGB(255,255,255)
         tail_length: float = field(init=False, default_factory=_random_tail_length)
+        color: RGB = field(init=False)
+        type: int = field(init=False, default_factory=lambda: random.randint(0,1))
+
+        def __post_init__(self):
+            self._set_color()
+
 
     continuum = True
+    explosion_pixel: ClassVar[int] = 49
+
     fireworks: list[Firework] = field(
         init=False, 
-        default_factory=lambda: []
+        default_factory=list
     )
+    generating: bool = field(init=False, default=False)
 
-    def __post_init__(self: FireworkAnimation):
-        self.fireworks.append(self.Firework(0, RGB.random_bright()))
+    # def __post_init__(self: FireworkAnimation):
+    #     self.fireworks.append(self.Firework(0, RGB.random_bright()))
 
     def reset(self: FireworkAnimation):
         self.fireworks = [self.Firework(0, RGB.random_bright())]
+        self.generating = True
+
+    def stop(self: FireworkAnimation):
+        self.generating = False
+
+    def running(self: FireworkAnimation) -> bool:
+        return len(self.fireworks) > 0
 
     def generate_new_firework(self: FireworkAnimation):
+        if not self.generating: return
         frame = self.frame()
 
         last_firework = self.fireworks[-1]
@@ -44,10 +67,11 @@ class FireworkAnimation(Animation):
         if probability_of_new_firework > random.random():
             self.fireworks.append(self.Firework(
                 birth_frame = frame,
-                color = RGB.random_bright()
+                explosion_color = RGB.random_bright()
             ))
         
     def prune_fireworks(self: FireworkAnimation):
+        if len(self.fireworks) == 0: return
         frame = self.frame()
         oldest_firework = self.fireworks[0]
         if frame - oldest_firework.birth_frame > 100: self.fireworks.pop(0)
@@ -68,7 +92,16 @@ class FireworkAnimation(Animation):
                 if pixel_position >= strip.size or pixel_position < 0: continue
                 
                 percent_dark = i / firework.tail_length
-                pixel_color = firework.color.interpolate(self.dark_led, percent_dark)
+                if pixel_position > self.explosion_pixel:
+                    can_sparkle = firework.type == 1 \
+                              and pixel_position < self.explosion_pixel + 10 \
+                              and pixel_position > self.explosion_pixel + 2
+                    if can_sparkle and random.random() > 0.95:
+                        pixel_color = RGB(255,255,255).interpolate(self.dark_led, percent_dark * 0.75)
+                    else:
+                        pixel_color = firework.explosion_color.interpolate(self.dark_led, percent_dark)
+                else:
+                    pixel_color = firework.color.interpolate(self.dark_led, percent_dark)
                 strip[pixel_position] = pixel_color
                 
         return strip

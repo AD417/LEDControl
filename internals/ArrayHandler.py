@@ -83,14 +83,17 @@ def update():
     fireworks = Program.active_strips & 0b111 == 0
 
     if fireworks:
-        if isinstance(Program.animation, FireworkAnimation):
-            left_array = firework_animations["left"].apply_to(RGBArray(100))
-            left_array.send_output_to(strips["left_firework"])
-            middle_array = firework_animations["middle"].apply_to(RGBArray(100))
-            middle_array.send_output_to(strips["middle_firework"])
-            right_array = firework_animations["right"].apply_to(RGBArray(100))
-            right_array.send_output_to(strips["right_firework"])
-            return
+        if not isinstance(Program.animation, FireworkAnimation):
+            for i in firework_animations:
+                firework_animations[i].stop()
+        
+        left_array = firework_animations["left"].apply_to(RGBArray(100))
+        left_array.send_output_to(strips["left_firework"])
+        middle_array = firework_animations["middle"].apply_to(RGBArray(100))
+        middle_array.send_output_to(strips["middle_firework"])
+        right_array = firework_animations["right"].apply_to(RGBArray(100))
+        right_array.send_output_to(strips["right_firework"])
+        return
     
 
     RGBArray(100).send_output_to(strips["left_firework"])
@@ -100,17 +103,27 @@ def update():
     left =      Program.active_strips & 0b001 > 0
     middle =    Program.active_strips & 0b010 > 0
     right =     Program.active_strips & 0b100 > 0
+    all =       Program.active_strips & 0b111 == 7
 
 
-    array = RGBArray(300)
+    array = RGBArray(200)
     array = Program.animation.apply_to(array)
 
     if not left:
         array.mask(0, 100)
+    elif not all:
+        array.mask(0, 44)
+
     if not middle:
         array.mask(100, 200)
-    if not right:
-        array.mask(200, 300)
+    elif not all:
+        array.mask(100, 145)
+        array.mask(197,200)
+
+    # if not right:
+    #     array.mask(200, 300)
+    # elif not all:
+    #     array.mask(200, 257)
     array.send_output_to(strips["buildings"])
     strips["buildings"].show()
     

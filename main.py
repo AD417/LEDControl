@@ -12,6 +12,7 @@ from internals.command.fileloader import load_file, load_next_command, file_summ
 from internals.LED_data import *
 import internals.ArrayHandler as ArrayHandler
 from internals.command.handler import do_my_command
+import internals.command.recorder as recorder
 import internals.Program as Program
 
 '''
@@ -80,8 +81,10 @@ async def get_input():
             elif Program.file_loaded:
                 full_command = load_next_command()
             
-
+        recorder.add(full_command)
         do_my_command(full_command)
+
+    recorder.save_commands()
 
 async def led_loop():
     ArrayHandler.begin()
@@ -124,10 +127,12 @@ if __name__ == "__main__":
     # print("\n".join(Program.command_queue))
 
     startup_time = datetime.now()
+    readable_time = startup_time.strftime("%a %b %d %H:%M:%S %Y\n")
+    recorder.add(readable_time)
 
     welcome_message = "LEDControl v0.2.0\n"
     welcome_message += "Program created by AD417. Software is in BETA: expect bugs!\n"
-    welcome_message += startup_time.strftime("Last login: %a %b %d %H:%M:%S %Y\n")
+    welcome_message += startup_time.strftime("Last login: %s" % readable_time)
     
     if args.execute:
         welcome_message += "\n"
