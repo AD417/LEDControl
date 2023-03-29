@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .Animation import Animation
-from ..RGB import RGB
+from ..components import Animation, RGBArray
 
 @dataclass
 class AlternatingAnimation(Animation):
@@ -13,10 +12,15 @@ class AlternatingAnimation(Animation):
     `width`: How often a lit pixel appears in the array. Default 3. Minimum 2. If every `X`th LED is lit, then there are `X-1` unlit LEDs between them. """
     width: int = 3
 
-    def pixel_state(self: AlternatingAnimation, pixel_id: int) -> RGB:
+    def apply_to(self: AlternatingAnimation, strip: RGBArray):
         frame = self.frame()
-        if (frame + pixel_id) % self.width == 0: return self.color
-        return self.dark_led
+        for pixel in range(strip.size):
+            if (pixel + frame) % self.width == 0:
+                strip[pixel] = self.color
+            else:
+                strip[pixel] = self.dark_led
+
+        return strip
 
     def __str__(self) -> str:
         ordinal = ""

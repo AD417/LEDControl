@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from ..components import RGB, RGBArray
+from ._rgb import RGB
+from ._rgb_array import RGBArray
 
 @dataclass
 class Animation(ABC):
@@ -45,7 +46,7 @@ class Animation(ABC):
         return self
 
     @abstractmethod
-    def apply_to(self: Animation, strip: RGBArray):
+    def apply_to(self: Animation, strip: RGBArray) -> RGBArray:
         """Apply this animation to an RGB array, given the animation type and amount of time since the animation began. \n
         Parameters:
         `strip`: The RGBArray to apply this animation to."""

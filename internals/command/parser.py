@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from argparse import ArgumentParser, ArgumentTypeError, ArgumentError
+from argparse import ArgumentParser, ArgumentTypeError, ArgumentError, RawDescriptionHelpFormatter
 from datetime import timedelta
 from typing import NoReturn
 
@@ -67,6 +67,14 @@ def add_recursion_to(parser: LEDParser):
         help="Whether the interrupt should repeat if enter is pressed with an empty input"
     )
 
+def add_strips_to(parser: LEDParser):
+    parser.add_argument(
+        "-o", "--out",
+        type=int,
+        metavar="ACTIVE_STRIPS",
+        help="The strips that should be enabled for this animation"
+    )
+
 def add_transition_to(parser: LEDParser):
     parser.add_argument(
         "-t", "--transition",
@@ -120,6 +128,7 @@ alternating_parser = LEDParser(
 add_required_interval_to(alternating_parser)
 add_required_width_to(alternating_parser, is_int=True, help="The distance between pixels in the animation")
 add_color_to(alternating_parser)
+add_strips_to(alternating_parser)
 add_transition_to(alternating_parser)
 
 color_parser = LEDParser(
@@ -166,30 +175,47 @@ add_transition_to(color_parser)
 
 # Exit has no parameters, and the existence of parameter is completely irrelevant. 
 
+fill_parser = LEDParser(
+    prog="fill",
+    description="Make the lights all turn on to a single value",
+)
+add_color_to(fill_parser)
+add_strips_to(fill_parser)
+add_transition_to(fill_parser)
+
+# Fireworks has no parameters. 
+
 flash_parser = LEDParser(
     prog="flash",
     description="Make the lights flash for a brief interval before resuming the previous command",
 )
 add_required_interval_to(flash_parser)
 add_color_to(flash_parser)
+add_strips_to(flash_parser)
 flash_parser_futures = flash_parser.add_mutually_exclusive_group()
 add_future_to(flash_parser_futures)
 add_kill_to(flash_parser_futures)
-
 add_recursion_to(flash_parser)
 
-fill_parser = LEDParser(
-    prog="fill",
-    description="Make the lights all turn on to a single value",
-)
-add_color_to(fill_parser)
-add_transition_to(fill_parser)
 
 kill_parser = LEDParser(
     prog="kill",
     description="Turn all the lights off",
 )
 add_transition_to(kill_parser)
+
+out_state_parser = LEDParser(
+    prog="out state",
+    description="Set which of the LEDs on the stage should be enabled currently",
+    epilog="1 = (001) = Taxi on\n2 = (010) = Bodgea on\n4 = (100) = Salon on\n0 = (000) = Fireworks!",
+    formatter_class=RawDescriptionHelpFormatter
+)
+out_state_parser.add_argument(
+    "state",
+    type=int,
+    metavar="state",
+    help="The new state of the LED array, based on binary bits."
+)
 
 pause_parser = LEDParser(
     prog="pause",
@@ -211,6 +237,7 @@ pulse_parser = LEDParser(
 )
 add_required_interval_to(pulse_parser, default_value_ms=3000)
 add_color_to(pulse_parser)
+add_strips_to(pulse_parser)
 add_transition_to(pulse_parser)
 
 status_parser = LEDParser(
@@ -230,6 +257,7 @@ traffic_parser = LEDParser(
 )
 add_required_interval_to(traffic_parser, default_value_ms=250)
 add_color_to(traffic_parser)
+add_strips_to(traffic_parser)
 add_transition_to(traffic_parser)
 traffic_parser.add_argument(
     "density",
@@ -246,5 +274,6 @@ wave_parser = LEDParser(
 )
 add_required_interval_to(wave_parser)
 add_color_to(wave_parser)
+add_strips_to(wave_parser)
 add_transition_to(wave_parser)
 add_required_width_to(wave_parser, help="the size of one wave in the animation")
